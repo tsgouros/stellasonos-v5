@@ -1,0 +1,5 @@
+# ninja log v5
+1	10	0	/Users/tiffany/Desktop/StellasonosApp/StellasonosApp/android/app/.cxx/Debug/30w6u281/x86_64/CMakeFiles/cmake.verify_globs	7f6d6e500255c2c6
+0	1786	1749616660881590017	CMakeFiles/appmodules.dir/Users/tiffany/Desktop/StellasonosApp/StellasonosApp/android/app/build/generated/autolinking/src/main/jni/autolinking.cpp.o	ce5e42212e346d88
+0	1951	1749616661040602442	CMakeFiles/appmodules.dir/OnLoad.cpp.o	256cc5ca2cb2da79
+1951	2023	1749616661115371723	/Users/tiffany/Desktop/StellasonosApp/StellasonosApp/android/app/build/intermediates/cxx/Debug/30w6u281/obj/x86_64/libappmodules.so	c06e69ac09ec1f6e

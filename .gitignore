@@ -1,3 +1,14 @@
+# Android build folders
+android/build/
+android/app/build/
+
+# iOS build folders
+ios/build/
+
+# Native build outputs that cause GitHub file size errors
+*.apk
+*.so
+
 # Logs
 logs
 *.log
