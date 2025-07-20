@@ -2,8 +2,12 @@
 android/build/
 android/app/build/
 
+android/app/.cxx/
+
 # iOS build folders
 ios/build/
+
+
 
 # Native build outputs that cause GitHub file size errors
 *.apk

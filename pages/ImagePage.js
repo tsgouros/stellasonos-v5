@@ -1,4 +1,3 @@
-// ImagePage.jsx
 import React, { useState, useRef, useEffect } from "react";
 import {
   View,
@@ -7,52 +6,80 @@ import {
   TouchableOpacity,
   Text,
   Dimensions,
+  ActivityIndicator,
 } from "react-native";
-
 import SuperImage from "../utils/SuperImage.js";
 
 export default function ImagePage({ route, navigation }) {
   const { image } = route.params;
-
   const superImage = useRef(new SuperImage(image)).current;
 
   const [cursorCoords, setCursorCoords] = useState({ x: null, y: null });
   const [cursorColorHex, setCursorColorHex] = useState("#ffffff");
   const [segmentNumber, setSegmentNumber] = useState(null);
   const [lastTap, setLastTap] = useState(0);
+  const [imageSize, setImageSize] = useState(null);
+  const [shouldRotate, setShouldRotate] = useState(false);
 
-  const touchAreaWidth = Dimensions.get("window").width;
-  const touchAreaHeight = Dimensions.get("window").height;
+  const screenWidth = Dimensions.get("window").width;
+  const screenHeight = Dimensions.get("window").height;
 
-  // Call performSegmentation once on mount to set up segmentData
   useEffect(() => {
     async function setupSegmentation() {
-      // For debugging, we simulate an imageData object with width and height
       const imageData = { width: 10, height: 10 };
       await superImage.performSegmentation(imageData);
     }
+
+    const uri = superImage.currentImage().src;
+    Image.getSize(
+      uri,
+      (width, height) => {
+        const aspectRatio = width / height;
+        let rotate = false;
+
+        if (aspectRatio > 1.3) {
+          rotate = true;
+        } else if (aspectRatio < 0.7) {
+          rotate = false;
+        }
+
+        // Use swapped width/height for rotated fit
+        const finalSize = rotate
+          ? getFitSize(height, width, screenWidth * 0.95, screenHeight * 0.95)
+          : getFitSize(width, height, screenWidth * 0.95, screenHeight * 0.95);
+
+        setShouldRotate(rotate);
+        setImageSize(finalSize);
+      },
+      (error) => {
+        console.warn("Failed to load image dimensions", error);
+      }
+    );
+
     setupSegmentation();
   }, []);
 
-  async function updateCursor(x, y) {
-    setCursorCoords({ x, y });
+  function getFitSize(imgW, imgH, maxW, maxH) {
+    const imgRatio = imgW / imgH;
+    const maxRatio = maxW / maxH;
+
+    if (imgRatio > maxRatio) {
+      return { width: maxW, height: maxW / imgRatio };
+    } else {
+      return { width: maxH * imgRatio, height: maxH };
+    }
+  }
+
+  async function updateCursor(relativeX, relativeY, absoluteX, absoluteY) {
+    setCursorCoords({ x: absoluteX, y: absoluteY });
 
     try {
-      const color = await superImage.getColorAt(
-        x,
-        y,
-        touchAreaWidth,
-        touchAreaHeight
-      );
+      const color = await superImage.getColorAt(relativeX, relativeY, screenWidth, screenHeight);
       setCursorColorHex(color);
 
-      // Calculate segment index at position
-      const localX = Math.floor((x / touchAreaWidth) * superImage.win.imgWidth);
-      const localY = Math.floor(
-        (y / touchAreaHeight) * superImage.win.imgHeight
-      );
+      const localX = Math.floor((relativeX / screenWidth) * superImage.win.imgWidth);
+      const localY = Math.floor((relativeY / screenHeight) * superImage.win.imgHeight);
       const idx = localY * superImage.win.imgWidth + localX;
-
       const segment = superImage.segmentData[idx];
       setSegmentNumber(segment);
     } catch (err) {
@@ -61,7 +88,7 @@ export default function ImagePage({ route, navigation }) {
       setSegmentNumber(null);
     }
 
-    superImage.play(x, y);
+    superImage.play(relativeX, relativeY);
   }
 
   function handleTouch(event) {
@@ -72,8 +99,16 @@ export default function ImagePage({ route, navigation }) {
     }
     setLastTap(now);
 
-    const { locationX, locationY } = event.nativeEvent;
-    updateCursor(locationX, locationY);
+    const { locationX, locationY, pageX, pageY } = event.nativeEvent;
+    updateCursor(locationX, locationY, pageX, pageY);
+  }
+
+  if (!imageSize) {
+    return (
+      <View style={styles.imageContainer}>
+        <ActivityIndicator size="large" />
+      </View>
+    );
   }
 
   return (
@@ -84,8 +119,8 @@ export default function ImagePage({ route, navigation }) {
       onResponderTerminationRequest={() => false}
       onResponderGrant={handleTouch}
       onResponderMove={(event) => {
-        const { locationX, locationY } = event.nativeEvent;
-        updateCursor(locationX, locationY);
+        const { locationX, locationY, pageX, pageY } = event.nativeEvent;
+        updateCursor(locationX, locationY, pageX, pageY);
       }}
       onResponderRelease={() => {
         superImage.stopSound();
@@ -94,26 +129,38 @@ export default function ImagePage({ route, navigation }) {
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.navigate("Home")}
-        accessibilityLabel="Back to Home"
-        accessibilityHint="Navigates back to the home screen"
       >
         <Text style={styles.backButtonText}>← Back to Home</Text>
       </TouchableOpacity>
 
-      <Image
-        style={styles.image}
-        source={{ uri: superImage.currentImage().src }}
-      />
+      <View
+        style={{
+          width: imageSize.width,
+          height: imageSize.height,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
+        <Image
+          style={{
+            width: shouldRotate ? imageSize.height : imageSize.width,
+            height: shouldRotate ? imageSize.width : imageSize.height,
+            transform: shouldRotate ? [{ rotate: "90deg" }] : [],
+          }}
+          source={{ uri: superImage.currentImage().src }}
+          resizeMode="contain"
+        />
+      </View>
 
       {cursorCoords.x !== null && cursorCoords.y !== null && (
         <View
           style={[
-            styles.circle,
             {
               position: "absolute",
               left: cursorCoords.x - 20,
               top: cursorCoords.y - 20,
             },
+            styles.circle,
           ]}
           pointerEvents="none"
         />
@@ -138,13 +185,6 @@ const styles = StyleSheet.create({
   imageContainer: {
     flex: 1,
     backgroundColor: "#FFFFFF",
-    margin: 0,
-    padding: 0,
-    position: "absolute",
-    top: 0,
-    left: 0,
-    bottom: 0,
-    right: 0,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -162,18 +202,13 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontSize: 16,
   },
-  image: {
-    flex: 1,
-    resizeMode: "contain",
-    width: Dimensions.get("window").width,
-  },
   circle: {
     height: 40,
     width: 40,
     borderRadius: 20,
     borderWidth: 2,
     borderColor: "#00000020",
-    backgroundColor: "rgba(0,150,255,0.7)", // fixed blue circle
+    backgroundColor: "rgba(0,150,255,0.7)",
   },
   infoBox: {
     position: "absolute",

@@ -2,7 +2,6 @@ import { OpenCV } from 'react-native-fast-opencv';
 import { ObjectType } from 'react-native-fast-opencv';
 
 
-// utils/SuperImage.js
 export default class SuperImage {
   constructor(complexImage, name = "") {
     console.log("initializing SuperImage (bare-bones)");
