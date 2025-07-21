@@ -1,3 +1,4 @@
+import React, {useState} from 'react';
 import { OpenCV } from 'react-native-fast-opencv';
 import { ObjectType, ThresholdTypes, ColorConversionCodes, DataTypes } from 'react-native-fast-opencv';
 
@@ -23,7 +24,7 @@ export default class SuperImage {
     // from each label id, store customized color/haptic/sound based on size of label
     // will be developed later
     // this.segmentRecord = { sum: 0, color: 0, haptic: 0, sound: 0 };
-    
+
     // initializing value for win
     this.win = {
       winWidth: 300,
@@ -31,6 +32,11 @@ export default class SuperImage {
       imgWidth: 10,
       imgHeight: 10,
     };
+
+    const [numLabels, setNumLabels] = useState(0);
+    const [statsData, setStatsData] = useState([]);
+    const [centroidsData, setCentroidsData] = useState([]);
+    const [segmentData, setSegmentData] = useState(new Int16Array(this.win.imgWidth * this.win.imgHeight).fill(0));
   }
 
   currentImage() {
@@ -60,6 +66,7 @@ export default class SuperImage {
     };
   }
 
+  // temporily download image from url, then load it as a base64 string
   async loadBase64() {
     console.log("---- Loading base64 from:", this.currentImage().src);
     let imagePath;
@@ -78,49 +85,67 @@ export default class SuperImage {
     }
   }
 
+  // todo: upate loadbase64, srcMatJS col and row value to this.image(imgwidth)
   async performSegmentation(imageData) {
     // check： just use superimage object
-    this.win = {
-      winWidth: 300,
-      winHeight: 300,
-      imgWidth: imageData.width || 10,
-      imgHeight: imageData.height || 10,
-    };
-    const { imgWidth, imgHeight } = this.win;
-    const size = imgWidth * imgHeight;
-
     console.log("--in performSegmentation")
-    console.log(imageData)
+    this.segmentData = new Array(size);
+
+    console.log("imageData", imageData)
     await this.loadBase64()
     if (!this.base64) throw new Error("Base64 not ready yet");
-
-    this.segmentData = new Array(size);
   
-    console.log("base64ToMat")
+    console.log("----1) base64ToMat");
     const srcMat = OpenCV.base64ToMat(this.base64);
-
     if (srcMat) {
       console.log("source", srcMat);
     } else {
       console.log("empty source");
     }
     const srcMatJS = OpenCV.toJSValue(srcMat);  
-    console.log("Mat:jsvalue", srcMatJS)   
 
+    // setting img size from srcMat
+    this.win = {
+      winWidth: 300,
+      winHeight: 300,
+      imgWidth: srcMatJS.cols || 10,
+      imgHeight: srcMatJS.rows || 10,
+    };
+
+    const { imgWidth, imgHeight } = this.win;
+    const size = imgWidth * imgHeight;
+
+    // console.log("srcMat:jsvalue", srcMatJS)
+    // console.log('srcMat.type', srcMatJS.type);  
+
+    console.log('----2) grayscaling...');
+    let grayMat = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
+    console.log("grayMat", grayMat);
+    await OpenCV.invoke("cvtColor", srcMat, grayMat, ColorConversionCodes.COLOR_BGR2GRAY);
+    console.log('----finished grayscale')
+    // TODO: check RGB or BGR
+    // const grayMatCheck = OpenCV.toJSValue(grayMat);  
+    // console.log("grayMat:jsvalue", grayMatCheck)
+    // const threshMat = OpenCV.createObject(ObjectType.Mat);
+
+    console.log('----3) thresholding...');
+    let thresh = 50
+    let threshMat = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
+    OpenCV.invoke("threshold", grayMat, threshMat, thresh, 255, ThresholdTypes.THRESH_BINARY_INV);
+    console.log("threshMat", threshMat);
+    console.log('----finished thresholding')
+    
+    console.log("----4) connectedComponentWithStats")
     try {
-      console.log('grayscaling...');
-      let grayMat = OpenCV.createObject(ObjectType.Mat, srcMatJS.cols, srcMatJS.rows, DataTypes.CV_8UC3);
-      const grayMatCheck = OpenCV.toJSValue(grayMat);  
-      console.log("grayMat:jsvalue", grayMatCheck)
-      // const threshMat = OpenCV.createObject(ObjectType.Mat);
-      OpenCV.invoke('cvtColor', {
-        src: srcMat,
-        dst: grayMat,
-        code: ColorConversionCodes.COLOR_RGBA2GRAY,
-      });
+      const labelsId = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
+      const statsId = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
+      const centroidsId = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
+      const { numLabels } = await OpenCV.invoke('connectedComponentsWithStats', threshMat, labelsId, statsId, centroidsId);
+      console.log('numLabels:', numLabels);
+      setNumLabels(numLabels);
     } catch (error) {
-      console.log("error in grayscaling", error)
-    }
+      console.log("connectComponents error", error)
+    } 
     // fills segmentData
     // for (let y = 0; y < imgHeight; y++) {
     //   for (let x = 0; x < imgWidth; x++) {

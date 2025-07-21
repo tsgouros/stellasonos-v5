@@ -34,6 +34,7 @@ export default function ImagePage({ route, navigation }) {
       // check: should i just be the current image, then no param?
       await superImage.performSegmentation(superImage.currentImage);
     }
+    console.log("at useEffect, performSegmentation")
     setupSegmentation();
   }, []);
 
@@ -50,9 +51,11 @@ export default function ImagePage({ route, navigation }) {
       setCursorColorHex(color);
 
       // Calculate segment index at position
+      console.log("at updateCursor, assigning imgWidth")
       const localX = Math.floor((x / touchAreaWidth) * superImage.win.imgWidth);
       const localY = Math.floor((y / touchAreaHeight) * superImage.win.imgHeight);
       const idx = localY * superImage.win.imgWidth + localX;
+      console.log("after assignment")
 
       const segment = superImage.segmentData[idx];
       setSegmentNumber(segment);
