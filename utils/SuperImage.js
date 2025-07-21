@@ -103,6 +103,8 @@ export default class SuperImage {
       console.log("empty source");
     }
     const srcMatJS = OpenCV.toJSValue(srcMat);  
+    console.log("srcMatJS", srcMatJS)
+    // type 16 means CV_16UC3?
 
     // setting img size from srcMat
     this.win = {
@@ -115,34 +117,45 @@ export default class SuperImage {
     const { imgWidth, imgHeight } = this.win;
     const size = imgWidth * imgHeight;
 
-    // console.log("srcMat:jsvalue", srcMatJS)
+    // console.log("srcMat:jsvalue", srcMatJS);
     // console.log('srcMat.type', srcMatJS.type);  
 
     console.log('----2) grayscaling...');
-    let grayMat = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
-    console.log("grayMat", grayMat);
+    // must specify size from srcMatJS, otherwise hostfunction <unknown>
+    let grayMat = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_16UC1);
     await OpenCV.invoke("cvtColor", srcMat, grayMat, ColorConversionCodes.COLOR_BGR2GRAY);
+    console.log("grayMat", OpenCV.toJSValue(grayMat));
     console.log('----finished grayscale')
-    // TODO: check RGB or BGR
-    // const grayMatCheck = OpenCV.toJSValue(grayMat);  
-    // console.log("grayMat:jsvalue", grayMatCheck)
-    // const threshMat = OpenCV.createObject(ObjectType.Mat);
+    // TODO: check RGB or BGR --> opencv loads default to BGR
 
     console.log('----3) thresholding...');
     let thresh = 50
-    let threshMat = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
-    OpenCV.invoke("threshold", grayMat, threshMat, thresh, 255, ThresholdTypes.THRESH_BINARY_INV);
-    console.log("threshMat", threshMat);
+    // need to specify size?
+    let threshMat = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8UC1);
+    // TODO: compare with function "Canny"
+    await OpenCV.invoke("threshold", grayMat, threshMat, thresh, 255, ThresholdTypes.THRESH_BINARY_INV);
+    console.log("threshMatJS", OpenCV.toJSValue(threshMat));
     console.log('----finished thresholding')
     
     console.log("----4) connectedComponentWithStats")
     try {
-      const labelsId = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
-      const statsId = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
-      const centroidsId = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_8UC1);
-      const { numLabels } = await OpenCV.invoke('connectedComponentsWithStats', threshMat, labelsId, statsId, centroidsId);
-      console.log('numLabels:', numLabels);
-      setNumLabels(numLabels);
+      const labels = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8U);
+      const stats = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_32S);
+      const centroids = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_64F);
+      const { numLabels } = OpenCV.invoke('connectedComponentsWithStats', threshMat, labels, stats, centroids);
+      console.log('connectedComponents numLabels:', numLabels);
+      // setNumLabels(numLabels);
+
+      // from https://github.com/lukaszkurantdev/react-native-fast-opencv/issues/25
+      const statsData = OpenCV.matToBuffer(stats, 'int32');
+      for (let i = 0; i < numLabels; i++) {
+        const x = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_LEFT];
+        const y = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_TOP];
+        const width = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_WIDTH];
+        const height = statsData?.buffer[i * 5 + +ConnectedComponentsTypes.CC_STAT_HEIGHT];
+        const area = statsData?.buffer[i * 5 + +ConnectedComponentsTypes.CC_STAT_AREA];
+        console.log(`Component ${i}: x=${x.toFixed(2)}, y=${y.toFixed(2)}, width=${width.toFixed(2)}, height=${height.toFixed(2)}, area=${area?.toFixed(2)}`);
+      }
     } catch (error) {
       console.log("connectComponents error", error)
     } 
