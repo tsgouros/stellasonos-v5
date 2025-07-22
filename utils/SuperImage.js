@@ -1,18 +1,28 @@
 import { OpenCV } from 'react-native-fast-opencv';
 import { ObjectType } from 'react-native-fast-opencv';
 
+import { Audio } from 'expo-av'; // or use another sound lib
+import ironicConfig from '../utils/ironicConfig.json'; // adjust path as needed
+
+
 
 export default class SuperImage {
   constructor(complexImage, name = "") {
     console.log("initializing SuperImage (bare-bones)");
+
+    // Save the main image source and metadata
     this.masterSrc = complexImage.src;
     this.title = complexImage.title;
     this.id = complexImage.id;
+
+    // Store image layers. Currently, only layer 0 (the base image) is used
     this.layers = { 0: { src: complexImage.src } };
     this.currentImageKey = 0;
 
-    // Initially empty until segmentation is performed
+    // Will hold pixel-wise segment values after segmentation
     this.segmentData = [];
+
+
     this.win = {
       winWidth: 300,
       winHeight: 300,
@@ -21,10 +31,15 @@ export default class SuperImage {
     };
   }
 
+  // Returns the currently active image layer
   currentImage() {
     return this.layers[this.currentImageKey];
   }
 
+  /**
+   * Converts screen coordinates (x, y) to image pixel coordinates (integer rounded).
+   * Returns clamped values so they stay within image bounds.
+   */
   getPos(x, y) {
     return {
       x: Math.min(
@@ -38,6 +53,10 @@ export default class SuperImage {
     };
   }
 
+  /**
+   * Get the segment color at a screen location (x, y) given the size of the display area.
+   * Returns a hex color based on which quadrant the point falls into.
+   */
   getColorAt(x, y, touchAreaWidth, touchAreaHeight) {
     const localX = Math.floor((x / touchAreaWidth) * this.win.imgWidth);
     const localY = Math.floor((y / touchAreaHeight) * this.win.imgHeight);
@@ -55,6 +74,10 @@ export default class SuperImage {
     else return "#ffffff"; // white fallback
   }
 
+  /**
+   * Handle a touch/play event at screen coordinates (x, y)
+   * Logs which quadrant (segment) the touched point falls into
+   */
   play(x, y) {
     const pos = this.getPos(x, y);
     const idx = pos.y * this.win.imgWidth + pos.x;
@@ -67,6 +90,10 @@ export default class SuperImage {
     console.log(">>> SuperImage.stopSound(): Sound stopped");
   }
 
+  /**
+   * Performs a dummy segmentation of the image into 4 quadrants.
+   * Updates segmentData with quadrant values per pixel (0–3).
+   */
   async performSegmentation(imageData) {
     this.win = {
       winWidth: 300,
