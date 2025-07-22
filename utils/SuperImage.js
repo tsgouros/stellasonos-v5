@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import { OpenCV } from 'react-native-fast-opencv';
-import { ObjectType, ThresholdTypes, ColorConversionCodes, DataTypes } from 'react-native-fast-opencv';
+import { ObjectType, ThresholdTypes, ColorConversionCodes, DataTypes, ConnectedComponentsTypes } from 'react-native-fast-opencv';
 
 import RNFetchBlob from 'rn-fetch-blob';
 const { fs } = RNFetchBlob;
@@ -8,40 +8,40 @@ const { fs } = RNFetchBlob;
 // utils/SuperImage.js
 export default class SuperImage {
   constructor(complexImage, name = "") {
-    console.log("--initializing SuperImage (bare-bones)");
+    console.log("--initializing SuperImage");
+    // TODO: can delete global variable
     this.masterSrc = complexImage.src;
     this.title = complexImage.title;
     this.id = complexImage.id;
     this.layers = { 0: { src: complexImage.src } }; // not fully initialized?
     this.currentImageKey = 0;
     
-    this.base64 = null;
+    this.matJS = null;
 
     // Store a map from pixel to label id 
     // Initially empty until segmentation is performed
     this.segmentData = [];
 
+    // TODO: to be implemented by stats
     // from each label id, store customized color/haptic/sound based on size of label
     // will be developed later
     // this.segmentRecord = { sum: 0, color: 0, haptic: 0, sound: 0 };
 
-    // initializing value for win
+    // initial value for window, pixel
     this.win = {
       winWidth: 300,
       winHeight: 300,
       imgWidth: 10,
       imgHeight: 10,
     };
-
-    const [numLabels, setNumLabels] = useState(0);
-    const [statsData, setStatsData] = useState([]);
-    const [centroidsData, setCentroidsData] = useState([]);
-    const [segmentData, setSegmentData] = useState(new Int16Array(this.win.imgWidth * this.win.imgHeight).fill(0));
   }
 
   currentImage() {
     return this.layers[this.currentImageKey];
   }
+
+
+  // TODO: from Tom's original code, compare getPos
 
   // Accept window coordinates, return image coordinates.
   // getPos(x, y) {
@@ -68,97 +68,125 @@ export default class SuperImage {
 
   // temporily download image from url, then load it as a base64 string
   async loadBase64() {
-    console.log("---- Loading base64 from:", this.currentImage().src);
+    console.log(">> Loading base64 from:", this.currentImage().src);
     let imagePath;
-
-    try {
-      const resp = await RNFetchBlob.config({ fileCache: true })
-        .fetch("GET", this.currentImage().src);
-      imagePath = resp.path();
-      // console.log("downloaded to ", imagePath)
-
-      this.base64 = await resp.readFile("base64");
-      console.log("---- base64 success!");
-      await RNFetchBlob.fs.unlink(imagePath);
-    } catch (err) {
-      console.error("-- RNFetchBlob error:", err);
-    }
+    const resp = await RNFetchBlob.config({ fileCache: true })
+      .fetch("GET", this.currentImage().src);
+    imagePath = resp.path();
+    base64 = await resp.readFile("base64");
+    // console.log(">>>> base64 success!");
+    await RNFetchBlob.fs.unlink(imagePath);
+    return base64
   }
 
-  // todo: upate loadbase64, srcMatJS col and row value to this.image(imgwidth)
-  async performSegmentation(imageData) {
-    // check： just use superimage object
-    console.log("--in performSegmentation")
-    this.segmentData = new Array(size);
+  // extract a random matJS to display intermediate images in imagePage
+  getMatImage() {
+    return this.matJS?.base64 ? `data:image/png;base64,${this.matJS.base64}` : null;
+  }
 
-    console.log("imageData", imageData)
-    await this.loadBase64()
-    if (!this.base64) throw new Error("Base64 not ready yet");
+  // TODO: upate loadbase64, srcMatJS col and row value to this.image(imgwidth)
+  async performSegmentation(imageData) {
+    // TODO: check just use superimage object
+    console.log("--in function: performSegmentation")
+    // this.segmentData = new Array(size);
+
+    console.log(">> loading imageData", imageData)
+    src = await this.loadBase64()
+    if (!src) throw new Error("src base64 string not ready yet");
   
     console.log("----1) base64ToMat");
-    const srcMat = OpenCV.base64ToMat(this.base64);
+    const srcMat = OpenCV.base64ToMat(src);
     if (srcMat) {
       console.log("source", srcMat);
     } else {
       console.log("empty source");
     }
-    const srcMatJS = OpenCV.toJSValue(srcMat);  
-    console.log("srcMatJS", srcMatJS)
-    // type 16 means CV_16UC3?
+    const srcMatJS = OpenCV.toJSValue(srcMat); 
+    // TODO: type 16 means CV_16UC3?
 
-    // setting img size from srcMat
+    // setting correct img size from srcMat
     this.win = {
       winWidth: 300,
       winHeight: 300,
       imgWidth: srcMatJS.cols || 10,
       imgHeight: srcMatJS.rows || 10,
     };
-
     const { imgWidth, imgHeight } = this.win;
     const size = imgWidth * imgHeight;
-
-    // console.log("srcMat:jsvalue", srcMatJS);
-    // console.log('srcMat.type', srcMatJS.type);  
 
     console.log('----2) grayscaling...');
     // must specify size from srcMatJS, otherwise hostfunction <unknown>
     let grayMat = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_16UC1);
     await OpenCV.invoke("cvtColor", srcMat, grayMat, ColorConversionCodes.COLOR_BGR2GRAY);
-    console.log("grayMat", OpenCV.toJSValue(grayMat));
-    console.log('----finished grayscale')
+    this.matJS = OpenCV.toJSValue(grayMat)
+    try {OpenCV.toJSValue(grayMat)} catch (e) {console.log('grascaling error', e)}
+    // console.log("grayMat", OpenCV.toJSValue(grayMat));
+    // console.log('----finished grayscale')
     // TODO: check RGB or BGR --> opencv loads default to BGR
 
     console.log('----3) thresholding...');
-    let thresh = 50
-    // need to specify size?
+    // TODO: set approproaite threh
+    let thresh = 50;
     let threshMat = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8UC1);
     // TODO: compare with function "Canny"
     await OpenCV.invoke("threshold", grayMat, threshMat, thresh, 255, ThresholdTypes.THRESH_BINARY_INV);
-    console.log("threshMatJS", OpenCV.toJSValue(threshMat));
-    console.log('----finished thresholding')
+    // used to display intermediate images
+    // this.matJS = OpenCV.toJSValue(threshMat)
+    try {OpenCV.toJSValue(threshMat)} catch (e) {console.log('thresholding error', e)}
+    // console.log("threshMatJS", OpenCV.toJSValue(threshMat));
+    // console.log('----finished thresholding')
     
     console.log("----4) connectedComponentWithStats")
-    try {
-      const labels = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8U);
-      const stats = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_32S);
-      const centroids = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_64F);
-      const { numLabels } = OpenCV.invoke('connectedComponentsWithStats', threshMat, labels, stats, centroids);
-      console.log('connectedComponents numLabels:', numLabels);
-      // setNumLabels(numLabels);
+    const labels = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8U);
+    const stats = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_32S);
+    const centroids = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_64F);
+    const numLabels = await OpenCV.invoke( 'connectedComponentsWithStats', threshMat, labels, stats, centroids);
+    console.log('total no. of segments', numLabels);
 
-      // from https://github.com/lukaszkurantdev/react-native-fast-opencv/issues/25
-      const statsData = OpenCV.matToBuffer(stats, 'int32');
-      for (let i = 0; i < numLabels; i++) {
-        const x = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_LEFT];
-        const y = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_TOP];
-        const width = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_WIDTH];
-        const height = statsData?.buffer[i * 5 + +ConnectedComponentsTypes.CC_STAT_HEIGHT];
-        const area = statsData?.buffer[i * 5 + +ConnectedComponentsTypes.CC_STAT_AREA];
-        console.log(`Component ${i}: x=${x.toFixed(2)}, y=${y.toFixed(2)}, width=${width.toFixed(2)}, height=${height.toFixed(2)}, area=${area?.toFixed(2)}`);
+    console.log('>>>>inspecting labels')
+    const labelsData = OpenCV.matToBuffer(labels, 'int32');
+    console.log('labelsData =', labelsData);
+    // where large image starts to choke
+    console.log('buffer =', labelsData?.buffer);
+    try {
+      const keys = Object.keys(labelsData.buffer); // or use Object.entries if needed
+      console.log('buffer key count =', keys.length);
+      // console.log('buffer length =', labelsData.buffer.length);
+      for (let i = 0; i < keys.length; i++) {
+        // not printed, not in the loop???
+        console.log(i)
+        this.segmentData[i] = labelsData[i];
       }
     } catch (error) {
-      console.log("connectComponents error", error)
-    } 
+      console.log(">>>>accessing labels buffer: ", error)
+    }
+
+    // labelsData.buffer already returns a 1D array, assign it to segmentData -> chokes on large image
+    // const idx = localY * superImage.win.imgWidth + localX;
+    // this.segmentData = labelsData.buffer;
+    console.log("finished loading segmentData")
+    
+    console.log('>>>>inspecting stats')
+    const statsData = OpenCV.matToBuffer(stats, 'int32');
+    console.log('statsData =', statsData);
+    // console.log('buffer =', statsData?.buffer);
+    console.log('buffer length =', statsData?.buffer?.length);
+
+    console.log('inspecting segment stats: ', statsData?.buffer[0 * 5 + ConnectedComponentsTypes.CC_STAT_LEFT]);
+    
+    // from https://github.com/lukaszkurantdev/react-native-fast-opencv/issues/25
+    // TODO: ERROR - loop wouldn't run, i or anything is not printed
+    for (let i = 0; i < numLabels; i++) {
+      console.log("Inspecting segment #", i);
+      console.log(ConnectedComponentsTypes.CC_STAT_LEFT)
+      const x = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_LEFT];
+      const y = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_TOP];
+      const width = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_WIDTH];
+      const height = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_HEIGHT];
+      const area = statsData?.buffer[i * 5 + ConnectedComponentsTypes.CC_STAT_AREA];
+      console.log(`Component ${i}: x=${x.toFixed(2)}, y=${y.toFixed(2)}, width=${width.toFixed(2)}, height=${height.toFixed(2)}, area=${area?.toFixed(2)}`);
+    }
+    
     // fills segmentData
     // for (let y = 0; y < imgHeight; y++) {
     //   for (let x = 0; x < imgWidth; x++) {
@@ -176,8 +204,9 @@ export default class SuperImage {
     // }
 
     console.log(
-      `>>> SuperImage.performSegmentation(): Quad segmentation with size ${size} created`
+      `>>>> SuperImage.performSegmentation(): segmentation finished with size ${size}`
     );
+    // OpenCV.clearBuffers();
   }
   
   getColorAt(x, y, touchAreaWidth, touchAreaHeight) {
@@ -207,7 +236,9 @@ export default class SuperImage {
   }
 
   stopSound() {
-    console.log(">>> SuperImage.stopSound(): Sound stopped");
+    console.log(">> SuperImage.stopSound(): Sound stopped");
   }
+
+  return 
 
 }

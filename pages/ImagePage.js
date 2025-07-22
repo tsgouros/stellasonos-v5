@@ -12,7 +12,7 @@ import {
 import SuperImage from "../utils/SuperImage.js";
 
 export default function ImagePage({ route, navigation }) {
-  console.log("--initializing ImagePage")
+  // console.log("initializing ImagePage")
   
   const { image } = route.params;
 
@@ -34,7 +34,7 @@ export default function ImagePage({ route, navigation }) {
       // check: should i just be the current image, then no param?
       await superImage.performSegmentation(superImage.currentImage);
     }
-    console.log("at useEffect, performSegmentation")
+    // console.log("at useEffect, performSegmentation")
     setupSegmentation();
   }, []);
 
@@ -58,6 +58,7 @@ export default function ImagePage({ route, navigation }) {
       console.log("after assignment")
 
       const segment = superImage.segmentData[idx];
+      console.log("segment", segment)
       setSegmentNumber(segment);
     } catch (err) {
       console.warn("Failed to get color at:", err);

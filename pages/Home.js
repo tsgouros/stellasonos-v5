@@ -84,7 +84,8 @@ export default function Home({ navigation }) {
 
   const navigateToImagePage = (image) => {
     navigation.navigate("ImagePage", { image });
-    console.log("Navigating to Image page with image: " + image.title);
+    console.log("----------new page selected----------")
+    console.log("Navigating to imagePage: " + image.title);
   };
 
   const goBack = () => navigation.goBack();
