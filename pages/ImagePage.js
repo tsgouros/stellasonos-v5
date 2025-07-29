@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-
 import {
   View,
   StyleSheet,
@@ -8,22 +7,19 @@ import {
   Text,
   Dimensions,
   ActivityIndicator,
+  Pressable,
 } from "react-native";
 import SuperImage from "../utils/SuperImage.js";
 
 export default function ImagePage({ route, navigation }) {
   const { image } = route.params;
-
-  // Core SuperImage logic
   const superImage = useRef(new SuperImage(image)).current;
 
-  // UI state
   const [cursorCoords, setCursorCoords] = useState({ x: null, y: null });
   const [cursorColorHex, setCursorColorHex] = useState("#ffffff");
   const [segmentNumber, setSegmentNumber] = useState(null);
   const [lastTap, setLastTap] = useState(0);
 
-  // Computed size of the image on the screen (after scaling + rotation)
   const [imageSize, setImageSize] = useState(null);
   const [shouldRotate, setShouldRotate] = useState(false);
 
@@ -31,43 +27,34 @@ export default function ImagePage({ route, navigation }) {
   const screenHeight = Dimensions.get("window").height;
 
   useEffect(() => {
-    // Load and initialize segmentation model
-    async function setupSegmentation() {
+    async function setup() {
       const imageData = { width: 10, height: 10 };
       await superImage.performSegmentation(imageData);
+
+      const uri = superImage.currentImage().src;
+      Image.getSize(
+        uri,
+        (width, height) => {
+          const aspectRatio = width / height;
+          const rotate = aspectRatio > 1.3;
+          const finalSize = rotate
+            ? getFitSize(height, width, screenWidth * 0.95, screenHeight * 0.95)
+            : getFitSize(width, height, screenWidth * 0.95, screenHeight * 0.95);
+          setShouldRotate(rotate);
+          setImageSize(finalSize);
+        },
+        (error) => {
+          console.warn("Failed to load image dimensions", error);
+        }
+      );
     }
 
-
-    // Load image dimensions, compute display size, and determine rotation
-    const uri = superImage.currentImage().src;
-    Image.getSize(
-      uri,
-      (width, height) => {
-        const aspectRatio = width / height;
-        const rotate = aspectRatio > 1.3;
-
-        // Compute how big the image will appear on screen
-        const finalSize = rotate
-          ? getFitSize(height, width, screenWidth * 0.95, screenHeight * 0.95)
-          : getFitSize(width, height, screenWidth * 0.95, screenHeight * 0.95);
-
-        setShouldRotate(rotate);
-        setImageSize(finalSize);
-      },
-      (error) => {
-        console.warn("Failed to load image dimensions", error);
-      }
-    );
-
-    setupSegmentation();
+    setup();
   }, []);
 
-
-  // Get scaled size of image on screen to fit within max dimensions
   function getFitSize(imgW, imgH, maxW, maxH) {
     const imgRatio = imgW / imgH;
     const maxRatio = maxW / maxH;
-
     if (imgRatio > maxRatio) {
       return { width: maxW, height: maxW / imgRatio };
     } else {
@@ -75,49 +62,32 @@ export default function ImagePage({ route, navigation }) {
     }
   }
 
-  /**
-   * Convert screen-space touch (relativeX, relativeY) to image pixel coordinates (imageX, imageY)
-   * This ensures your touches align with the actual segmentation pixels
-   * Rotates coordinates if image is rotated
-   */
-  function getImageXY(relativeX, relativeY) {
+  function screenToImageCoords(screenX, screenY, screenWidth, screenHeight, imageWidth, imageHeight) {
+    const imageX = Math.floor(Math.max(0, Math.min(imageWidth - 1, (screenX / screenWidth) * imageWidth)));
+    const imageY = Math.floor(Math.max(0, Math.min(imageHeight - 1, (screenY / screenHeight) * imageHeight)));
+    return { x: imageX, y: imageY };
+  }
+
+  function formatImage(relativeX, relativeY) {
     const imgW = superImage.win.imgWidth;
     const imgH = superImage.win.imgHeight;
     const displayW = imageSize.width;
     const displayH = imageSize.height;
 
-    let x, y;
-
+    let screenX, screenY;
     if (shouldRotate) {
-      // 90° clockwise rotation:
-      //   newX = y / H → mapped to image width
-      //   newY = (W - x) / W → mapped to image height
-      x = Math.floor((relativeY / displayH) * imgW);
-      y = Math.floor(((displayW - relativeX) / displayW) * imgH);
+      screenX = relativeY;
+      screenY = displayW - relativeX;
+      return screenToImageCoords(screenX, screenY, displayH, displayW, imgW, imgH);
     } else {
-      // Normal orientation
-      x = Math.floor((relativeX / displayW) * imgW);
-      y = Math.floor((relativeY / displayH) * imgH);
+      return screenToImageCoords(relativeX, relativeY, displayW, displayH, imgW, imgH);
     }
-
-    // Clamp values to avoid out-of-bounds
-    x = Math.max(0, Math.min(imgW - 1, x));
-    y = Math.max(0, Math.min(imgH - 1, y));
-
-    return { x, y };
   }
 
-  /**
-   * Called on touch or move
-   * - Updates UI circle
-   * - Computes color at the touched pixel
-   * - Retrieves segment number based on pixel index in segmentData
-   */
   async function updateCursor(relativeX, relativeY, absoluteX, absoluteY) {
     setCursorCoords({ x: absoluteX, y: absoluteY });
 
     try {
-      // Get the visual color at touch point (with rotation-aware logic)
       const color = await superImage.getColorAt(
         relativeX,
         relativeY,
@@ -127,16 +97,11 @@ export default function ImagePage({ route, navigation }) {
       );
       setCursorColorHex(color);
 
-
-      // Get the actual pixel in the segmentation map
-      const { x: imgX, y: imgY } = getImageXY(relativeX, relativeY);
+      const { x: imgX, y: imgY } = formatImage(relativeX, relativeY);
       const idx = imgY * superImage.win.imgWidth + imgX;
-
-      // Lookup segment number using image-space XY
       const segment = superImage.segmentData[idx];
       setSegmentNumber(segment);
-
-      superImage.play(imgX, imgY); // Use image coords for logging
+      superImage.play(imgX, imgY);
     } catch (err) {
       console.warn("Failed to get color at:", err);
       setCursorColorHex("#ffffff");
@@ -165,20 +130,7 @@ export default function ImagePage({ route, navigation }) {
   }
 
   return (
-    <View
-      style={styles.imageContainer}
-      onStartShouldSetResponder={() => true}
-      onMoveShouldSetResponder={() => true}
-      onResponderTerminationRequest={() => false}
-      onResponderGrant={handleTouch}
-      onResponderMove={(event) => {
-        const { locationX, locationY, pageX, pageY } = event.nativeEvent;
-        updateCursor(locationX, locationY, pageX, pageY);
-      }}
-      onResponderRelease={() => {
-        superImage.stopSound();
-      }}
-    >
+    <View style={styles.imageContainer}>
       <TouchableOpacity
         style={styles.backButton}
         onPress={() => navigation.navigate("Home")}
@@ -186,7 +138,13 @@ export default function ImagePage({ route, navigation }) {
         <Text style={styles.backButtonText}>← Back to Home</Text>
       </TouchableOpacity>
 
-      <View
+      <Pressable
+        onPressIn={handleTouch}
+        onPressOut={() => superImage.stopSound()}
+        onTouchMove={(event) => {
+          const { locationX, locationY, pageX, pageY } = event.nativeEvent;
+          updateCursor(locationX, locationY, pageX, pageY);
+        }}
         style={{
           width: imageSize.width,
           height: imageSize.height,
@@ -203,7 +161,7 @@ export default function ImagePage({ route, navigation }) {
           source={{ uri: superImage.currentImage().src }}
           resizeMode="contain"
         />
-      </View>
+      </Pressable>
 
       {cursorCoords.x !== null && cursorCoords.y !== null && (
         <View
