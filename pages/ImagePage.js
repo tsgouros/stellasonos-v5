@@ -26,6 +26,58 @@ export default function ImagePage({ route, navigation }) {
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
 
+  // 1. Pure screen to image coordinate conversion
+  function screenToImageCoords(screenX, screenY, screenWidth, screenHeight, imageWidth, imageHeight) {
+    const imageX = (screenX / screenWidth) * imageWidth;
+    const imageY = (screenY / screenHeight) * imageHeight;
+    return { x: imageX, y: imageY };
+  }
+
+  // 2. Pure image to screen coordinate conversion
+  function imageToScreenCoords(imageX, imageY, imageWidth, imageHeight, screenWidth, screenHeight) {
+    const screenX = (imageX / imageWidth) * screenWidth;
+    const screenY = (imageY / imageHeight) * screenHeight;
+    return { x: screenX, y: screenY };
+  }
+
+  // 3. Process coordinates with optional rotation
+  function processCoordinatesWithRotation(inputX, inputY, screenWidth, screenHeight, imageWidth, imageHeight, shouldRotate) {
+    // Step 1: Handle rotation if needed
+    let screenX = inputX;
+    let screenY = inputY;
+    let displayWidth = screenWidth;
+    let displayHeight = screenHeight;
+    
+    if (shouldRotate) {
+      // Rotate coordinates 90 degrees clockwise
+      screenX = inputY;
+      screenY = screenWidth - inputX;
+      displayWidth = screenHeight;
+      displayHeight = screenWidth;
+    }
+
+    // Step 2: Convert to image coordinates
+    const imageCoords = screenToImageCoords(
+      screenX,
+      screenY,
+      displayWidth,
+      displayHeight,
+      imageWidth,
+      imageHeight
+    );
+
+    // Step 3: Clamp to image bounds and floor to integers
+    const clampedX = Math.max(0, Math.min(imageWidth - 1, Math.floor(imageCoords.x)));
+    const clampedY = Math.max(0, Math.min(imageHeight - 1, Math.floor(imageCoords.y)));
+
+    console.log(`Coordinate transformation:
+      Input: (${inputX}, ${inputY})
+      ${shouldRotate ? `Rotated: (${screenX}, ${screenY})` : ''}
+      Image: (${clampedX}, ${clampedY})`);
+
+    return { x: clampedX, y: clampedY };
+  }
+
   useEffect(() => {
     async function setup() {
       const imageData = { width: 10, height: 10 };
@@ -62,50 +114,54 @@ export default function ImagePage({ route, navigation }) {
     }
   }
 
-  function screenToImageCoords(screenX, screenY, screenWidth, screenHeight, imageWidth, imageHeight) {
-    const imageX = Math.floor(Math.max(0, Math.min(imageWidth - 1, (screenX / screenWidth) * imageWidth)));
-    const imageY = Math.floor(Math.max(0, Math.min(imageHeight - 1, (screenY / screenHeight) * imageHeight)));
-    return { x: imageX, y: imageY };
-  }
-
-  function formatImage(relativeX, relativeY) {
-    const imgW = superImage.win.imgWidth;
-    const imgH = superImage.win.imgHeight;
-    const displayW = imageSize.width;
-    const displayH = imageSize.height;
-
-    let screenX, screenY;
-    if (shouldRotate) {
-      screenX = relativeY;
-      screenY = displayW - relativeX;
-      return screenToImageCoords(screenX, screenY, displayH, displayW, imgW, imgH);
-    } else {
-      return screenToImageCoords(relativeX, relativeY, displayW, displayH, imgW, imgH);
-    }
-  }
-
-  async function updateCursor(relativeX, relativeY, absoluteX, absoluteY) {
+  async function updateCursor(absoluteX, absoluteY) {
     setCursorCoords({ x: absoluteX, y: absoluteY });
 
     try {
-      const color = await superImage.getColorAt(
-        relativeX,
-        relativeY,
-        imageSize.width,
-        imageSize.height,
-        shouldRotate
-      );
-      setCursorColorHex(color);
+      // Calculate image position (centered)
+      const imageLeft = (screenWidth - imageSize.width) / 2;
+      const imageTop = (screenHeight - imageSize.height) / 2;
+      
+      // Calculate relative coordinates within image
+      const relativeX = absoluteX - imageLeft;
+      const relativeY = absoluteY - imageTop;
 
-      const { x: imgX, y: imgY } = formatImage(relativeX, relativeY);
-      const idx = imgY * superImage.win.imgWidth + imgX;
-      const segment = superImage.segmentData[idx];
-      setSegmentNumber(segment);
-      superImage.play(imgX, imgY);
+      // Check if touch is within image bounds
+      const isWithinImage = 
+        relativeX >= 0 && relativeX <= imageSize.width &&
+        relativeY >= 0 && relativeY <= imageSize.height;
+
+      if (isWithinImage) {
+        const color = await superImage.getColorAt(
+          relativeX,
+          relativeY,
+          imageSize.width,
+          imageSize.height
+        );
+        setCursorColorHex(color);
+
+        const { x: imgX, y: imgY } = processCoordinatesWithRotation(
+          relativeX,
+          relativeY,
+          imageSize.width,
+          imageSize.height,
+          superImage.win.imgWidth,
+          superImage.win.imgHeight,
+          shouldRotate
+        );
+        
+        const idx = imgY * superImage.win.imgWidth + imgX;
+        const segment = superImage.segmentData[idx];
+        setSegmentNumber(segment);
+        superImage.play(imgX, imgY);
+      } else {
+        setCursorColorHex("#ffffff");
+        setSegmentNumber(-1);
+      }
     } catch (err) {
       console.warn("Failed to get color at:", err);
       setCursorColorHex("#ffffff");
-      setSegmentNumber(null);
+      setSegmentNumber(-1);
     }
   }
 
@@ -117,8 +173,8 @@ export default function ImagePage({ route, navigation }) {
     }
     setLastTap(now);
 
-    const { locationX, locationY, pageX, pageY } = event.nativeEvent;
-    updateCursor(locationX, locationY, pageX, pageY);
+    const { pageX, pageY } = event.nativeEvent;
+    updateCursor(pageX, pageY);
   }
 
   if (!imageSize) {
@@ -139,28 +195,29 @@ export default function ImagePage({ route, navigation }) {
       </TouchableOpacity>
 
       <Pressable
+        style={StyleSheet.absoluteFill}
         onPressIn={handleTouch}
         onPressOut={() => superImage.stopSound()}
         onTouchMove={(event) => {
-          const { locationX, locationY, pageX, pageY } = event.nativeEvent;
-          updateCursor(locationX, locationY, pageX, pageY);
-        }}
-        style={{
-          width: imageSize.width,
-          height: imageSize.height,
-          justifyContent: "center",
-          alignItems: "center",
+          const { pageX, pageY } = event.nativeEvent;
+          updateCursor(pageX, pageY);
         }}
       >
-        <Image
-          style={{
-            width: shouldRotate ? imageSize.height : imageSize.width,
-            height: shouldRotate ? imageSize.width : imageSize.height,
-            transform: shouldRotate ? [{ rotate: "90deg" }] : [],
-          }}
-          source={{ uri: superImage.currentImage().src }}
-          resizeMode="contain"
-        />
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center'
+        }}>
+          <Image
+            style={{
+              width: shouldRotate ? imageSize.height : imageSize.width,
+              height: shouldRotate ? imageSize.width : imageSize.height,
+              transform: shouldRotate ? [{ rotate: "90deg" }] : [],
+            }}
+            source={{ uri: superImage.currentImage().src }}
+            resizeMode="contain"
+          />
+        </View>
       </Pressable>
 
       {cursorCoords.x !== null && cursorCoords.y !== null && (
@@ -184,7 +241,7 @@ export default function ImagePage({ route, navigation }) {
           </Text>
           <Text style={styles.infoText}>Color: {cursorColorHex}</Text>
           <Text style={styles.infoText}>
-            Segment: {segmentNumber !== null ? segmentNumber : "-"}
+            Segment: {segmentNumber !== null ? segmentNumber : "-"} {segmentNumber === -1 && "(Outside image)"}
           </Text>
         </View>
       )}
