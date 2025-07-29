@@ -34,7 +34,7 @@ export default function ImagePage({ route, navigation }) {
       // check: should i just be the current image, then no param?
       await superImage.performSegmentation(superImage.currentImage);
     }
-    // console.log("at useEffect, performSegmentation")
+    console.log("at useEffect, performSegmentation")
     setupSegmentation();
   }, []);
 
@@ -51,14 +51,14 @@ export default function ImagePage({ route, navigation }) {
       setCursorColorHex(color);
 
       // Calculate segment index at position
-      console.log("at updateCursor, assigning imgWidth")
+      console.log("at updateCursor, assigning imgWidth");
       const localX = Math.floor((x / touchAreaWidth) * superImage.win.imgWidth);
       const localY = Math.floor((y / touchAreaHeight) * superImage.win.imgHeight);
       const idx = localY * superImage.win.imgWidth + localX;
-      console.log("after assignment")
+      console.log("after assignment");
 
       const segment = superImage.segmentData[idx];
-      console.log("segment", segment)
+      console.log("segment", segment);
       setSegmentNumber(segment);
     } catch (err) {
       console.warn("Failed to get color at:", err);
@@ -108,6 +108,11 @@ export default function ImagePage({ route, navigation }) {
       <Image
         style={styles.image}
         source={{ uri: superImage.currentImage().src }}
+      />
+
+      <Image
+        style={styles.image}
+        source={{ uri: superImage.getMatImage() }}
       />
 
       {cursorCoords.x !== null && cursorCoords.y !== null && (

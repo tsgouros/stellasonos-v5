@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import { OpenCV } from 'react-native-fast-opencv';
-import { ObjectType, ThresholdTypes, ColorConversionCodes, DataTypes, ConnectedComponentsTypes } from 'react-native-fast-opencv';
+import { LineTypes, ObjectType, ThresholdTypes, ColorConversionCodes, DataTypes, ConnectedComponentsTypes, RetrievalModes, ContourApproximationModes } from 'react-native-fast-opencv';
 
 import RNFetchBlob from 'rn-fetch-blob';
 const { fs } = RNFetchBlob;
@@ -73,13 +73,18 @@ export default class SuperImage {
     const resp = await RNFetchBlob.config({ fileCache: true })
       .fetch("GET", this.currentImage().src);
     imagePath = resp.path();
-    base64 = await resp.readFile("base64");
-    // console.log(">>>> base64 success!");
+    const base64 = await resp.readFile("base64");
+    console.log(">>>> base64 success!");
     await RNFetchBlob.fs.unlink(imagePath);
     return base64
   }
 
   // extract a random matJS to display intermediate images in imagePage
+  // if isDisplay, add in ImagePaget return: 
+  // <Image
+  //   style={styles.image}
+  //   source={{ uri: superImage.getMatImage() }}
+  // />
   getMatImage() {
     return this.matJS?.base64 ? `data:image/png;base64,${this.matJS.base64}` : null;
   }
@@ -91,7 +96,7 @@ export default class SuperImage {
     // this.segmentData = new Array(size);
 
     console.log(">> loading imageData", imageData)
-    src = await this.loadBase64()
+    const src = await this.loadBase64()
     if (!src) throw new Error("src base64 string not ready yet");
   
     console.log("----1) base64ToMat");
@@ -118,15 +123,15 @@ export default class SuperImage {
     // must specify size from srcMatJS, otherwise hostfunction <unknown>
     let grayMat = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_16UC1);
     await OpenCV.invoke("cvtColor", srcMat, grayMat, ColorConversionCodes.COLOR_BGR2GRAY);
-    this.matJS = OpenCV.toJSValue(grayMat)
+    // this.matJS = OpenCV.toJSValue(grayMat)
     try {OpenCV.toJSValue(grayMat)} catch (e) {console.log('grascaling error', e)}
     // console.log("grayMat", OpenCV.toJSValue(grayMat));
     // console.log('----finished grayscale')
     // TODO: check RGB or BGR --> opencv loads default to BGR
 
     console.log('----3) thresholding...');
-    // TODO: set approproaite threh
-    let thresh = 50;
+    // TODO: set approproaite thresh
+    let thresh = 50
     let threshMat = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8UC1);
     // TODO: compare with function "Canny"
     await OpenCV.invoke("threshold", grayMat, threshMat, thresh, 255, ThresholdTypes.THRESH_BINARY_INV);
@@ -136,11 +141,58 @@ export default class SuperImage {
     // console.log("threshMatJS", OpenCV.toJSValue(threshMat));
     // console.log('----finished thresholding')
     
+    // OpenCV.invoke('Canny', source, source, 75, 100);
+    console.log("----4) findContours");
+    try {
+      let contours = OpenCV.createObject(ObjectType.MatVector, 0, 0, DataTypes.CV_8UC1);
+      let hierarchy = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8UC1);
+      await OpenCV.invoke('findContoursWithHierarchy', threshMat, contours, hierarchy, RetrievalModes.RETR_TREE, ContourApproximationModes.CHAIN_APPROX_SIMPLE);
+      const contoursData = OpenCV.toJSValue(contours).array; 
+      console.log(contoursData);
+
+      const labelMat = OpenCV.createObject(ObjectType.Mat, srcMatJS.rows, srcMatJS.cols, DataTypes.CV_32SC1);
+      // // fill with zeros
+      // await OpenCV.invoke('setTo', labelMat, OpenCV.createObject(ObjectType.Scalar, [0]));
+
+      for (let i = 0; i < contoursData.length; ++i) {
+        const contour = contoursData[i];
+        const numPoints = contour.rows;
+        console.log(i, numPoints);
+
+        const color = OpenCV.createObject(ObjectType.Scalar, i + 1);
+        OpenCV.invoke('drawContours', labelMat, contours, i, color, -1, LineTypes.LINE_8);
+
+        // let color = OpenCV.createObject(ObjectType.Scalar, 
+        //   Math.round(Math.random() * 255),
+        //   Math.round(Math.random() * 255),
+        //   Math.round(Math.random() * 255)
+        // );
+        // The "-1" denotes the thickness of contour lines,
+        // and negative numbers make it so that the interiors are drawn.
+
+        // no hierarchy involved
+        // OpenCV.invoke('drawContours',
+        //   threshMat,
+        //   contours,
+        //   i,
+        //   color,
+        //   -1,
+        //   LineTypes.LINE_8
+        // );
+      }
+      this.matJS = OpenCV.toJSValue(labelMat);
+      console.log(labelMat);
+      this.segmentData = OpenCV.matToBuffer(labelMat, 'int32').buffer;
+      console.log(this.segmentData)
+    } catch (err) {console.log(err)}
+
+    // ===============================
     console.log("----4) connectedComponentWithStats")
     const labels = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8U);
     const stats = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_32S);
     const centroids = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_64F);
     const numLabels = await OpenCV.invoke( 'connectedComponentsWithStats', threshMat, labels, stats, centroids);
+    // TODO: delete await statement
     console.log('total no. of segments', numLabels);
 
     console.log('>>>>inspecting labels')
@@ -154,11 +206,11 @@ export default class SuperImage {
       // console.log('buffer length =', labelsData.buffer.length);
       for (let i = 0; i < keys.length; i++) {
         // not printed, not in the loop???
-        console.log(i)
-        this.segmentData[i] = labelsData[i];
+        // if (i % 100 == 0 ) {console.log(i);}
+        // this.segmentData[i] = labelsData[i];
       }
     } catch (error) {
-      console.log(">>>>accessing labels buffer: ", error)
+      console.log(">>>> error accessing labels buffer: ", error)
     }
 
     // labelsData.buffer already returns a 1D array, assign it to segmentData -> chokes on large image
