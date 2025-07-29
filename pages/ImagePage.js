@@ -8,6 +8,7 @@ import {
   Dimensions,
   ActivityIndicator,
   Pressable,
+  Platform
 } from "react-native";
 import SuperImage from "../utils/SuperImage.js";
 
@@ -25,6 +26,12 @@ export default function ImagePage({ route, navigation }) {
 
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
+
+  // Platform-specific back button position
+  const backButtonTop = Platform.select({
+    ios: 80,  // Lower position for iOS (especially for island devices)
+    android: 50 // Original position for Android
+  });
 
   // 1. Pure screen to image coordinate conversion
   function screenToImageCoords(screenX, screenY, screenWidth, screenHeight, imageWidth, imageHeight) {
@@ -71,7 +78,7 @@ export default function ImagePage({ route, navigation }) {
     const clampedY = Math.max(0, Math.min(imageHeight - 1, Math.floor(imageCoords.y)));
 
     console.log(`Coordinate transformation:
-      Input: (${inputX}, ${inputY})
+      Screen: (${inputX}, ${inputY})
       ${shouldRotate ? `Rotated: (${screenX}, ${screenY})` : ''}
       Image: (${clampedX}, ${clampedY})`);
 
@@ -187,22 +194,27 @@ export default function ImagePage({ route, navigation }) {
 
   return (
     <View style={styles.imageContainer}>
+      {/* Back button with higher zIndex to ensure it stays clickable */}
       <TouchableOpacity
-        style={styles.backButton}
+        style={[styles.backButton, { top: backButtonTop }]}
         onPress={() => navigation.navigate("Home")}
+        hitSlop={{top: 20, bottom: 20, left: 20, right: 20}}
       >
         <Text style={styles.backButtonText}>← Back to Home</Text>
       </TouchableOpacity>
 
-      <Pressable
+      {/* Main touch area */}
+      <View 
         style={StyleSheet.absoluteFill}
-        onPressIn={handleTouch}
-        onPressOut={() => superImage.stopSound()}
-        onTouchMove={(event) => {
+        onStartShouldSetResponder={() => true}
+        onMoveShouldSetResponder={() => true}
+        onResponderMove={(event) => {
           const { pageX, pageY } = event.nativeEvent;
           updateCursor(pageX, pageY);
         }}
+        onResponderRelease={handleTouch}
       >
+        {/* Image container */}
         <View style={{
           flex: 1,
           justifyContent: 'center',
@@ -218,8 +230,9 @@ export default function ImagePage({ route, navigation }) {
             resizeMode="contain"
           />
         </View>
-      </Pressable>
+      </View>
 
+      {/* Cursor indicator */}
       {cursorCoords.x !== null && cursorCoords.y !== null && (
         <View
           style={[
@@ -234,14 +247,16 @@ export default function ImagePage({ route, navigation }) {
         />
       )}
 
+      {/* Info box */}
       {cursorCoords.x !== null && cursorCoords.y !== null && (
         <View style={styles.infoBox}>
           <Text style={styles.infoText}>
-            Coords: {cursorCoords.x.toFixed(0)}, {cursorCoords.y.toFixed(0)}
+            Screen: {cursorCoords.x.toFixed(0)}, {cursorCoords.y.toFixed(0)}
           </Text>
           <Text style={styles.infoText}>Color: {cursorColorHex}</Text>
           <Text style={styles.infoText}>
-            Segment: {segmentNumber !== null ? segmentNumber : "-"} {segmentNumber === -1 && "(Outside image)"}
+            Segment: {segmentNumber !== null ? segmentNumber : "-"} 
+            {segmentNumber === -1 && " (Outside image)"}
           </Text>
         </View>
       )}
@@ -258,13 +273,12 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: "absolute",
-    top: 50,
     left: 20,
     backgroundColor: "#333",
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 6,
-    zIndex: 10,
+    zIndex: 100,
   },
   backButtonText: {
     color: "#fff",
@@ -277,6 +291,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "#00000020",
     backgroundColor: "rgba(0,150,255,0.7)",
+    zIndex: 50,
   },
   infoBox: {
     position: "absolute",
@@ -285,6 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#00000088",
     padding: 8,
     borderRadius: 6,
+    zIndex: 50,
   },
   infoText: {
     color: "white",
