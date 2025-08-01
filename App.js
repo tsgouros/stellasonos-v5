@@ -15,6 +15,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'; //s
 import Intro from './pages/Intro';
 import Home from './pages/Home';
 import ImagePage from './pages/ImagePage.js';
+import TestSeg from './pages/TestSeg.js';
 
 // Create a stack navigator instance
 const Stack = createNativeStackNavigator();
@@ -33,6 +34,7 @@ export default function App() { //main app component
         <Stack.Screen name="Intro" component={Intro} /> 
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="ImagePage" component={ImagePage} />
+        <Stack.Screen name="TestSeg" component={TestSeg} />
 
       </Stack.Navigator>
     </NavigationContainer>

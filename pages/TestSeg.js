@@ -11,8 +11,8 @@ import {
 
 import SuperImage from "../utils/SuperImage.js";
 
-export default function ImagePage({ route, navigation }) {
-  // console.log("initializing ImagePage")
+export default function TestSeg({ route, navigation }) {
+  console.log("initializing TestSeg")
   
   const { image } = route.params;
 
