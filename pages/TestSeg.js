@@ -30,11 +30,12 @@ export default function TestSeg({ route, navigation }) {
   // Call performSegmentation once on mount to set up segmentData
   useEffect(() => {
     async function setupSegmentation() {
-      // const imageData = { width: 10, height: 10 };
-      // check: should i just be the current image, then no param?
-      await superImage.performSegmentation(superImage.currentImage);
+        // const imageData = { width: 10, height: 10 };
+        // check: should i just be the current image, then no param?
+        await superImage.performSegmentation();
     }
-    console.log("at useEffect, performSegmentation")
+    
+    console.log("called performSegmentation")
     setupSegmentation();
   }, []);
 
