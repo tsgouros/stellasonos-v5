@@ -1,4 +1,6 @@
 import React, { useState, useRef } from "react";
+import { useFonts, Inter_300Light } from '@expo-google-fonts/inter';
+import { PublicSans_400Regular } from '@expo-google-fonts/public-sans';
 import {
   Platform,
   StatusBar,
@@ -24,6 +26,12 @@ import {
 const { width, height } = Dimensions.get("window");
 import images from "../images.json";
 
+const headerLogo = require("../assets/Group_27_2x.png");
+const playIcon = require("../assets/Icon_ion-play-circle_2x.png");
+const searchIcon = require("../assets/Search_2x.png");
+const menuIcon = require("../assets/Menu_2x.png");
+
+
 export default function Home({ navigation }) {
   const [searchText, setSearchText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -31,6 +39,7 @@ export default function Home({ navigation }) {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const panRef = useRef();
+  const flatListRef = useRef(); // Added FlatList ref
 
   const filteredImages =
     searchText.length > 0
@@ -40,6 +49,16 @@ export default function Home({ navigation }) {
       : [];
 
   const maxIndex = images.images.length - 1;
+
+  const scrollToThumbnail = (index) => {
+    if (flatListRef.current) {
+      flatListRef.current.scrollToIndex({
+        index,
+        animated: true,
+        viewPosition: 0.5,
+      });
+    }
+  };
 
   const onSearchChange = (text) => {
     setSearchText(text);
@@ -52,6 +71,7 @@ export default function Home({ navigation }) {
     setSearchText("");
     setShowDropdown(false);
     Keyboard.dismiss();
+    scrollToThumbnail(index); // Center selected thumbnail
   };
 
   const handleInputChange = (text) => setInputIndex(text);
@@ -60,6 +80,7 @@ export default function Home({ navigation }) {
     const newIndex = parseInt(inputIndex) - 1;
     if (!isNaN(newIndex) && newIndex >= 0 && newIndex <= maxIndex) {
       setCurrentIndex(newIndex);
+      scrollToThumbnail(newIndex); // Center
     } else {
       setInputIndex((currentIndex + 1).toString());
     }
@@ -71,6 +92,7 @@ export default function Home({ navigation }) {
       const newIndex = currentIndex + 1;
       setCurrentIndex(newIndex);
       setInputIndex((newIndex + 1).toString());
+      scrollToThumbnail(newIndex); // Center
     }
   };
 
@@ -79,6 +101,7 @@ export default function Home({ navigation }) {
       const newIndex = currentIndex - 1;
       setCurrentIndex(newIndex);
       setInputIndex((newIndex + 1).toString());
+      scrollToThumbnail(newIndex); // Center
     }
   };
 
@@ -93,12 +116,9 @@ export default function Home({ navigation }) {
     const { translationX, state } = event.nativeEvent;
 
     if (event.nativeEvent.state === 5) {
-      // Gesture end
       if (translationX < -50 && currentIndex < maxIndex) {
-        // swipe left
         handleNext();
       } else if (translationX > 50 && currentIndex > 0) {
-        // swipe right
         handlePrevious();
       }
     }
@@ -107,19 +127,45 @@ export default function Home({ navigation }) {
   const dynamicStyles = {
     container: {
       flex: 1,
-      backgroundColor: "#f5f5f5",
+      backgroundColor: "#000000",
+    },
+    headerContainer: {
+      width: "100%",
+      height: 60,
+      justifyContent: "center",
+      alignItems: "center",
+      backgroundColor: "#000000",
+      paddingHorizontal: 15,
+      paddingVertical: 5,
+      position: "relative",
+      flexDirection: "row",
+    },
+    headerIconWrapper: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      justifyContent: "center",
+      paddingHorizontal: 10,
+    },
+    leftIcon: {
+      left: 0,
+    },
+    rightIcon: {
+      right: 0,
+    },
+    headerImage: {
+      height: 40,
+      width: 120,
     },
     searchContainer: {
       width: "100%",
-      backgroundColor: "#fff",
-      paddingHorizontal: 10,
+      backgroundColor: "#000000",
+      paddingHorizontal: 1,
       paddingBottom: 5,
-      borderBottomWidth: 1,
-      borderBottomColor: "#ccc",
       zIndex: 20,
       ...Platform.select({
         android: {
-          marginTop: 20, // margin only on Android
+          marginTop: 20,
         },
       }),
     },
@@ -128,17 +174,18 @@ export default function Home({ navigation }) {
       height: 40,
       fontSize: 18,
       borderWidth: 1,
-      borderColor: "#ccc",
-      borderRadius: 6,
+      borderColor: "#FFFFFF",
+      borderRadius: 3,
       paddingHorizontal: 10,
-      color: "#000",
+      color: "#FFFFFF",
+      backgroundColor: "#000000",
     },
     dropdown: {
       maxHeight: 150,
       borderWidth: 1,
       borderColor: "#ccc",
       borderRadius: 6,
-      backgroundColor: "#fff",
+      backgroundColor: "#000000",
       marginTop: 5,
       zIndex: 20,
       ...Platform.select({
@@ -161,32 +208,30 @@ export default function Home({ navigation }) {
     },
     dropdownItemText: {
       fontSize: 16,
-      color: "#333",
+      color: "#FFFFFF",
     },
     noResultsText: {
       padding: 10,
       fontStyle: "italic",
       color: "#999",
     },
+    titleBelowSearch: {
+      color: "#FFFFFF",
+      fontSize: 20,
+      fontWeight: "600",
+      textAlign: "left",
+      paddingHorizontal: 10,
+      marginTop: 40,
+    },
     contentContainer: {
       flex: 1,
-      justifyContent: "center",
       alignItems: "center",
       paddingHorizontal: 10,
-      paddingTop: 20,
-    },
-    backButton: {
-      position: "absolute",
-      bottom: 40,
-      left: 10,
-      padding: 10,
-      zIndex: 10,
-      backgroundColor: "#eee",
-      borderRadius: 6,
+      paddingTop: 40,
     },
     imageContainer: {
       borderRadius: 8,
-      backgroundColor: "#f5f5f5",
+      backgroundColor: "#000000",
       ...Platform.select({
         ios: {
           shadowColor: "#000",
@@ -205,14 +250,15 @@ export default function Home({ navigation }) {
       height: height * 0.3,
       resizeMode: "contain",
       borderRadius: 8,
-      backgroundColor: "transparent", // prevents white box on Android
+      backgroundColor: "transparent",
     },
     text: {
       marginBottom: 20,
       marginTop: 10,
       fontSize: 24,
       fontWeight: "bold",
-      textAlign: "center",
+      textAlign: "left",
+      color: "white",
     },
     buttonContainer: {
       flexDirection: "row",
@@ -223,13 +269,16 @@ export default function Home({ navigation }) {
       gap: 15,
     },
     navButton: {
-      backgroundColor: "#007AFF",
+      backgroundColor: "#000000",
       paddingVertical: 10,
       paddingHorizontal: 20,
-      borderRadius: 8,
+      borderRadius: 3,
+      borderWidth: 1,
+      borderStyle: "solid",
+      borderColor: "#FFFFFF",
     },
     disabledButton: {
-      backgroundColor: "#ccc",
+      backgroundColor: "#000000",
     },
     navButtonText: {
       color: "#fff",
@@ -254,26 +303,30 @@ export default function Home({ navigation }) {
     tapImageText: {
       marginTop: 15,
       fontSize: 16,
-      color: "#666",
+      color: "#FFFFFF",
       textAlign: "center",
       fontStyle: "italic",
     },
     thumbnailList: {
-      marginTop: 20,
-      maxHeight: 80,
+      marginTop: 50,
+      maxHeight: 90,
     },
     thumbnailItem: {
-      width: 70,
-      height: 70,
+      width: 90,
+      height: 90,
       marginRight: 10,
-      borderRadius: 6,
       borderWidth: 2,
+      overflow: "hidden",
     },
     thumbnailSelected: {
-      borderColor: "#007AFF",
+      borderWidth: 1,
+      borderColor: "white",
+      borderRadius: 3,
     },
     thumbnailUnselected: {
-      borderColor: "transparent",
+      borderWidth: 1,
+      borderColor: "black",
+      borderRadius: 3,
     },
   };
 
@@ -293,7 +346,7 @@ export default function Home({ navigation }) {
     >
       <Image
         source={{ uri: item.src }}
-        style={{ width: 70, height: 70, borderRadius: 6 }}
+        style={{ width:90, height: 90, borderRadius: 6 }}
       />
     </TouchableOpacity>
   );
@@ -301,6 +354,41 @@ export default function Home({ navigation }) {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={dynamicStyles.container}>
+
+        {/* HEADER */}
+        <View style={dynamicStyles.headerContainer}>
+          {/* Left Menu Button */}
+          <TouchableOpacity
+            onPress={() => console.log("Menu icon pressed")}
+            style={[dynamicStyles.headerIconWrapper, dynamicStyles.leftIcon]}
+          >
+            <Image
+              source={menuIcon}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+
+          {/* Center NASA Logo */}
+          <Image
+            source={headerLogo}
+            style={dynamicStyles.headerImage}
+            resizeMode="contain"
+          />
+
+          {/* Right Search Button */}
+          <TouchableOpacity
+            onPress={() => console.log("Search icon pressed")}
+            style={[dynamicStyles.headerIconWrapper, dynamicStyles.rightIcon]}
+          >
+            <Image
+              source={searchIcon}
+              style={{ width: 20, height: 20 }}
+              resizeMode="contain"
+            />
+          </TouchableOpacity>
+        </View>
+
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <KeyboardAvoidingView
             style={{ flex: 1 }}
@@ -310,6 +398,7 @@ export default function Home({ navigation }) {
             <View style={dynamicStyles.searchContainer}>
               <TextInput
                 placeholder="Search images by title..."
+                placeholderTextColor="#777575ff"
                 style={dynamicStyles.searchInput}
                 value={searchText}
                 onChangeText={onSearchChange}
@@ -348,21 +437,15 @@ export default function Home({ navigation }) {
               )}
             </View>
 
-            <TouchableOpacity
-              style={dynamicStyles.backButton}
-              onPress={goBack}
-              accessibilityLabel="Back"
-              accessibilityHint="Button"
-              accessible={true}
-            >
-              <Text>Back</Text>
-            </TouchableOpacity>
+            {currentImage && (
+              <Text style={dynamicStyles.titleBelowSearch}>
+                {currentImage.title}
+              </Text>
+            )}
 
             <View style={dynamicStyles.contentContainer}>
               {currentImage ? (
                 <>
-                  <Text style={dynamicStyles.text}>{currentImage.title}</Text>
-
                   <PanGestureHandler
                     ref={panRef}
                     onEnded={onPanGestureEvent}
@@ -389,61 +472,65 @@ export default function Home({ navigation }) {
               )}
 
               <View style={dynamicStyles.buttonContainer}>
-                <TouchableOpacity
-                  onPress={handlePrevious}
-                  disabled={currentIndex === 0}
-                  style={[
-                    dynamicStyles.navButton,
-                    currentIndex === 0 && dynamicStyles.disabledButton,
-                  ]}
-                  accessibilityLabel="Previous Image"
-                >
-                  <Text style={dynamicStyles.navButtonText}>Previous</Text>
-                </TouchableOpacity>
-
-                <TextInput
-                  style={dynamicStyles.input}
-                  onChangeText={handleInputChange}
-                  value={inputIndex}
-                  keyboardType="numeric"
-                  returnKeyType="done"
-                  onSubmitEditing={handleSubmit}
-                  blurOnSubmit={false}
-                  selectTextOnFocus={true}
-                  accessibilityLabel={`Image ${inputIndex} out of ${
-                    maxIndex + 1
-                  } images`}
-                />
+                <View style={{ width: 120, alignItems: "flex-end" }}>
+                  <TouchableOpacity
+                    onPress={handlePrevious}
+                    disabled={currentIndex === 0}
+                    style={[
+                      dynamicStyles.navButton,
+                      currentIndex === 0 && dynamicStyles.disabledButton,
+                    ]}
+                    accessibilityLabel="Previous Image"
+                  >
+                    <Text style={dynamicStyles.navButtonText}>Previous</Text>
+                  </TouchableOpacity>
+                </View>
 
                 <TouchableOpacity
-                  onPress={handleNext}
-                  disabled={currentIndex === maxIndex}
-                  style={[
-                    dynamicStyles.navButton,
-                    currentIndex === maxIndex && dynamicStyles.disabledButton,
-                  ]}
-                  accessibilityLabel="Next Image"
+                  onPress={() => navigateToImagePage(currentImage)}
+                  accessibilityLabel="Play button"
+                  accessibilityHint="Navigates to image details"
+                  style={{ marginHorizontal: 20 }}
                 >
-                  <Text style={dynamicStyles.navButtonText}>Next</Text>
+                  <Image
+                    source={playIcon}
+                    style={{ width: 40, height: 40 }}
+                    resizeMode="contain"
+                  />
                 </TouchableOpacity>
+
+                <View style={{ width: 120, alignItems: "flex-start" }}>
+                  <TouchableOpacity
+                    onPress={handleNext}
+                    disabled={currentIndex === maxIndex}
+                    style={[
+                      dynamicStyles.navButton,
+                      currentIndex === maxIndex && dynamicStyles.disabledButton,
+                    ]}
+                    accessibilityLabel="Next Image"
+                  >
+                    <Text style={dynamicStyles.navButtonText}>Next</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              {/* Thumbnails */}
               <FlatList
+                ref={flatListRef}
                 data={images.images}
                 horizontal={true}
                 keyExtractor={(item, index) => item.id || index.toString()}
                 renderItem={renderThumbnail}
                 style={dynamicStyles.thumbnailList}
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={{ paddingHorizontal: 10 }}
+                contentContainerStyle={{ paddingHorizontal: 5 }}
                 accessibilityLabel="Image thumbnails for direct navigation"
+                getItemLayout={(data, index) => ({
+                  length: 100,
+                  offset: 100 * index,
+                  index,
+                })}
               />
 
-              {/* Text telling user to tap on the image */}
-              <Text style={dynamicStyles.tapImageText}>
-                tap on the image to be able to "hear" it
-              </Text>
             </View>
 
             <StatusBar />

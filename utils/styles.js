@@ -3,7 +3,7 @@ import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
 export const ContainerStyles = StyleSheet.create({
   defaultContainer: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -29,26 +29,26 @@ export const ButtonStyles = StyleSheet.create({
 });
 
 export const TextStyles = StyleSheet.create({
-  blackTextSmall: {
+  textSmall: {
     fontSize: 18,
-    color: "#111",
+    color: "#FFFFFF",
     justifyContent: 'center',
     textAlign: 'center',
     maxWidth: '80%',
     backgroundColor: "transparent"
   },
 
-  blackTextMedium: {
+  textMedium: {
     fontSize: 35,
-    color: "#111",
+    color: "#FFFFFF",
     justifyContent: 'center',
     textAlign: "center",
     backgroundColor: "transparent"
   },
 
-  blackTextLarge: {
+  textLarge: {
     fontSize: 50,
-    color: "#111",
+    color: "#FFFFFF",
     justifyContent: 'center',
     textAlign: "center",
     backgroundColor: "transparent"

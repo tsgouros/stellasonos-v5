@@ -2,6 +2,7 @@ PODS:
   - boost (1.84.0)
   - DoubleConversion (1.1.6)
   - fast_float (6.1.4)
+  - FastOpenCV-iOS (1.0.4)
   - FBLazyVector (0.79.3)
   - fmt (11.0.2)
   - glog (0.3.5)
@@ -1332,6 +1333,31 @@ PODS:
     - React-jsiexecutor
     - React-RCTFBReactNativeSpec
     - ReactCommon/turbomodule/core
+  - react-native-fast-opencv (0.4.6):
+    - DoubleConversion
+    - FastOpenCV-iOS (= 1.0.4)
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
   - react-native-safe-area-context (5.4.1):
     - DoubleConversion
     - glog
@@ -1729,7 +1755,35 @@ PODS:
     - React-logger (= 0.79.3)
     - React-perflogger (= 0.79.3)
     - React-utils (= 0.79.3)
+  - ReactNativeAudioToolkit (2.0.3):
+    - React
+  - rn-fetch-blob (0.12.0):
+    - React-Core
   - RNGestureHandler (2.26.0):
+    - DoubleConversion
+    - glog
+    - hermes-engine
+    - RCT-Folly (= 2024.11.18.00)
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-hermes
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - Yoga
+  - RNReactNativeHapticFeedback (2.3.3):
     - DoubleConversion
     - glog
     - hermes-engine
@@ -1972,6 +2026,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - React-microtasksnativemodule (from `../node_modules/react-native/ReactCommon/react/nativemodule/microtasks`)
+  - react-native-fast-opencv (from `../node_modules/react-native-fast-opencv`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -2004,13 +2059,17 @@ DEPENDENCIES:
   - ReactAppDependencyProvider (from `build/generated/ios`)
   - ReactCodegen (from `build/generated/ios`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - "ReactNativeAudioToolkit (from `../node_modules/@react-native-community/audio-toolkit`)"
+  - rn-fetch-blob (from `../node_modules/rn-fetch-blob`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
 SPEC REPOS:
   trunk:
+    - FastOpenCV-iOS
     - SocketRocket
 
 EXTERNAL SOURCES:
@@ -2091,6 +2150,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   React-microtasksnativemodule:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/microtasks"
+  react-native-fast-opencv:
+    :path: "../node_modules/react-native-fast-opencv"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   React-NativeModulesApple:
@@ -2155,8 +2216,14 @@ EXTERNAL SOURCES:
     :path: build/generated/ios
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  ReactNativeAudioToolkit:
+    :path: "../node_modules/@react-native-community/audio-toolkit"
+  rn-fetch-blob:
+    :path: "../node_modules/rn-fetch-blob"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNReactNativeHapticFeedback:
+    :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
     :path: "../node_modules/react-native-reanimated"
   RNScreens:
@@ -2168,6 +2235,7 @@ SPEC CHECKSUMS:
   boost: 7e761d76ca2ce687f7cc98e698152abd03a18f90
   DoubleConversion: cb417026b2400c8f53ae97020b2be961b59470cb
   fast_float: 06eeec4fe712a76acc9376682e4808b05ce978b6
+  FastOpenCV-iOS: 2057f306db3ad068577e6fca38411f1b1920d71e
   FBLazyVector: a62a7a5760929b6265e27bc01ab7598dde93ebd3
   fmt: a40bb5bd0294ea969aaaba240a927bd33d878cdd
   glog: 5683914934d5b6e4240e497e0f4a3b42d1854183
@@ -2203,6 +2271,7 @@ SPEC CHECKSUMS:
   React-logger: 44e070aefe084568c02b544b9d7d436703be1a47
   React-Mapbuffer: b25dedf7fe8923898c44b217ee2ef75c837d0e6a
   React-microtasksnativemodule: 22bd119cb27aa28ff15a4e9311e1a53034c14eab
+  react-native-fast-opencv: 67f83fb8a42e6024b7d90d68cc5a30190eab2cc9
   react-native-safe-area-context: dc279397abf103b0577f48c548630b7e639646a7
   React-NativeModulesApple: 28df2c2241d8e2be46db34179f86ad76a3663068
   React-oscompat: f26aa2a4adc84c34212ab12c07988fe19e9cf16a
@@ -2235,7 +2304,10 @@ SPEC CHECKSUMS:
   ReactAppDependencyProvider: 552391af67c115d8ee20f9359711e7821145cd96
   ReactCodegen: 1807bcf4715beaa540417d139032b54e57cdd005
   ReactCommon: b7062f81f6ea61ec29e03aab1d439fb56c49372c
+  ReactNativeAudioToolkit: de9610f323e855ac6574be8c99621f3d57c5df06
+  rn-fetch-blob: f065bb7ab7fb48dd002629f8bdcb0336602d3cba
   RNGestureHandler: 970902e9f2f6308b2a2519ce93108fbc65460933
+  RNReactNativeHapticFeedback: 7dfb10cca09eb7a4ed6b63ae6415a195beec8cf2
   RNReanimated: 6a437c90e263e4a2202a282f9d6dea0ad28d018d
   RNScreens: c2e3cc506212228c607b4785b315205e28acbf0f
   SocketRocket: d4aabe649be1e368d1318fdf28a022d714d65748
