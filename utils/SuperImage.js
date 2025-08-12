@@ -1,10 +1,10 @@
 import React, {useState, useEffect} from 'react';
 import {View,Image,ActivityIndicator} from "react-native";
 
+import kMeans from "../utils/kmeans.js"
 import { convertToRGB } from 'react-native-image-to-rgb';
 import { OpenCV } from 'react-native-fast-opencv';
 import { LineTypes, ObjectType, ThresholdTypes, ColorConversionCodes, DataTypes, ConnectedComponentsTypes, RetrievalModes, ContourApproximationModes } from 'react-native-fast-opencv';
-import kmeans from 'ml-kmeans';
 
 // utils/SuperImage.js
 export default class SuperImage {
@@ -81,36 +81,104 @@ export default class SuperImage {
 
   async image2rgb(url) {
     const rgbFlat = await convertToRGB(url);
-    console.log("rbg library: ", rgbFlat)
+    console.log("rbgFlat: ", rgbFlat)
 
-    const pixels = [];
-    for (let i = 0; i < rgbFlat.length; i += 3) {
-      pixels.push([rgbFlat[i], rgbFlat[i + 1], rgbFlat[i + 2]]);
+    const numPixels = rgbFlat.length / 3;
+    const pixels = new Array(numPixels);
+
+    // or let kmean reads in a flat array?
+    for (let p = 0, i = 0; p < numPixels; p++, i += 3) {
+      console.log("inside for loop")
+      if (p % 10000 === 0) console.log(p);
+      pixels[p] = [rgbFlat[i], rgbFlat[i + 1], rgbFlat[i + 2]];
     }
     return pixels
+    // // linear loop takes a long time
+    // const pixels = [];
+    // for (let i = 0; i < rgbFlat.length; i += 3) {
+    //   pixels.push([rgbFlat[i], rgbFlat[i + 1], rgbFlat[i + 2]]);
+    // }
+    // return pixels
   }
 
-  async kmeans(rgbData, NUM_CLUSTERS=5) {
-    var kMeans = require('kmeans-js');
-    console.log(kMeans)
-    var km = new kMeans({
+  async kmeans(rgbData, NUM_CLUSTERS=4) {
+    // var kMeans = require('../utils/kmeans');
+    console.log("kMeans: ", kMeans)
+    // just a new kMeans object, so could call other function too
+    this.km = new kMeans({
       K: NUM_CLUSTERS
     });
-    console.log(km)
+    console.log("km: ", this.km)
 
-    km.cluster(rgbData);
-    while (km.step()) {
-        km.findClosestCentroids();
-        km.moveCentroids();
+    this.km.cluster(rgbData);
+    while (this.km.step()) {
+        this.km.findClosestCentroids();
+        this.km.moveCentroids();
 
-        console.log(km.centroids);
-
-        if(km.hasConverged()) break;
+        // console.log(km.centroids);
+        if(this.km.hasConverged()) break;
     }
 
-    console.log('Finished in:', km.currentIteration, ' iterations');
-    console.log(km.centroids, km.clusters);
+    console.log('Finished in:', this.km.currentIteration, ' iterations');
+    console.log("centroids, cluster: ", this.km.centroids, this.km.clusters);
+    console.log("final segmentData:", this.km.segmentData);
+    // const centroidsData = this.km.centroids
+    // const clustersData = this.km.clusters
+    // console.log(centroidsData, clustersData);
+    // return { centroidsData, clustersData };
   }
+
+  // try with canny then floodfill
+
+  // looping through each pixel, could add during creation
+  async posterize(len) {
+    const numPixels = len; // width * height
+    var pixelData = []
+    for (let i = 0; i < numPixels; i++) {
+      const clusterId = this.km.clusters[i];
+      const color = this.km.centroids[clusterId] || [0, 0, 0]; // fallback black
+
+      // OpenCV Mat data order: B, G, R (not RGB)
+      pixelData[i * 3] = color[2];     // B channel  (note the swap RGB -> BGR)
+      pixelData[i * 3 + 1] = color[1]; // G channel
+      pixelData[i * 3 + 2] = color[0]; // R channel
+    }
+    console.log(pixelData)
+
+    const mat = OpenCV.createObject(ObjectType.Mat, 50, 100, DataTypes.CV_8UC3, pixelData); // 3-channel color mat
+    console.log(mat)
+    
+    return OpenCV.toJSValue(mat)
+
+    // const numPixels = len; // total pixels = width * height
+    // const outputRGB = new Uint8ClampedArray(numPixels); // or normal Array
+
+    // for (let i = 0; i < numPixels; i++) {
+    //   const clusterId = clusterIndices[i];
+    //   const color = clusterColors[clusterId] || [0, 0, 0]; // fallback black
+      
+    //   outputRGB[i * 3] = color[0];
+    //   outputRGB[i * 3 + 1] = color[1];
+    //   outputRGB[i * 3 + 2] = color[2];
+    // }
+
+    // // Create an empty Uint8ClampedArray for RGBA (ImageData format)
+    // const output = new Uint8ClampedArray(len);
+
+    // clusters.forEach((pixelIndices, clusterIndex) => {
+    //   const [r, g, b] = centroids[clusterIndex];
+    //   pixelIndices.forEach((pixelIdx) => {
+    //     const baseIdx = pixelIdx * 4; // RGBA stride
+    //     output[baseIdx] = r;
+    //     output[baseIdx + 1] = g;
+    //     output[baseIdx + 2] = b;
+    //     output[baseIdx + 3] = 255; // fully opaque
+    //   });
+    // });
+
+    // return output; // can be passed to Canvas/ImageData/etc.
+  }
+
 
   // TODO: upate loadbase64, srcMatJS col and row value to this.image(imgwidth)
   async performSegmentation() {
@@ -125,15 +193,12 @@ export default class SuperImage {
     // setSegmentedUri(newImageUri);
 
     const rgbData = await this.image2rgb(this.currentImage().src);
-    console.log("rbg library: ", rgbData)
+    console.log("rbgData: ", rgbData);
 
-    // call k-mean function
-    try{ 
-      var kMeans = require('kmeans-js');
-      console.log(kMeans)
-      await kmeans(rgbData)
-    } 
-    catch (err) {console.log(err)}
+    try {
+      await this.kmeans(rgbData);
+      this.matJS = await this.posterize(rgbData.length);
+    } catch (err) {console.log(err)}
 
     // TODO: Tiffany, setting true img size
     // setting correct img size from srcMat
@@ -172,10 +237,6 @@ export default class SuperImage {
       `>>>> SuperImage.performSegmentation(): segmentation finished with size ${size}`
     );
     // OpenCV.clearBuffers();
-  }
-
-  kmean(k) {
-    // 
   }
   
   getColorAt(x, y, touchAreaWidth, touchAreaHeight) {

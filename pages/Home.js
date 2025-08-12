@@ -107,6 +107,7 @@ export default function Home({ navigation }) {
 
   const navigateToImagePage = (image) => {
     navigation.navigate("TestSeg", { image });
+    console.log("%%%%%%%%%%--------------------%%%%%%%%%%")
     console.log("Navigating to Image page with image: " + image.title);
   };
 
