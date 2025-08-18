@@ -16,7 +16,7 @@ export default function Intro({ navigation }) {
       accessibilityHint="Double tap anywhere to start."
       activeOpacity={1}
     >
-      <Text style={TextStyles.blackTextSmall} accessibilityRole="text">Welcome! Tap anywhere to start.</Text>
+      <Text style={TextStyles.textSmall} accessibilityRole="text">Welcome! Tap anywhere to start.</Text>
       <StatusBar style="auto" />
     </TouchableOpacity>
   );
