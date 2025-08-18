@@ -2,7 +2,7 @@ import React, {useState, useEffect} from 'react';
 import {View,Image,ActivityIndicator} from "react-native";
 import RNFetchBlob from 'rn-fetch-blob';
 import kMeans from "../utils/kmeans.js"
-import { convertToRGB } from 'react-native-image-to-rgb';
+// import { convertToRGB } from 'react-native-image-to-rgb';
 import { OpenCV } from 'react-native-fast-opencv';
 import { LineTypes, ObjectType, ThresholdTypes, ColorConversionCodes, DataTypes, ConnectedComponentsTypes, RetrievalModes, ContourApproximationModes, InterpolationFlags } from 'react-native-fast-opencv';
 
