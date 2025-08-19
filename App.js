@@ -17,25 +17,33 @@ import Home from './pages/Home';
 import ImagePage from './pages/ImagePage.js';
 import TestSeg from './pages/TestSeg.js';
 
+import About from './pages/About';
+import HowToUse from './pages/HowToUse';
+import Team from './pages/Team';
+import Partners from './pages/Partners';
+import Settings from './pages/Settings';
+
 // Create a stack navigator instance
 const Stack = createNativeStackNavigator();
 
-export default function App() { //main app component
+export default function App() {
   return (
-    //navigation container to enable navigation throughout the app
     <NavigationContainer>
       <Stack.Navigator
-        initialRouteName="Intro" //first screen shown when app loads
-
-        screenOptions={{
-          headerShown: false  // Hide the app header
-        }}>
-
-        <Stack.Screen name="Intro" component={Intro} /> 
+        initialRouteName="Intro"
+        screenOptions={{ headerShown: false }}
+      >
+        <Stack.Screen name="Intro" component={Intro} />
         <Stack.Screen name="Home" component={Home} />
         <Stack.Screen name="ImagePage" component={ImagePage} />
         <Stack.Screen name="TestSeg" component={TestSeg} />
-
+        
+        {/* Add all your menu screens */}
+        <Stack.Screen name="About" component={About} />
+        <Stack.Screen name="HowToUse" component={HowToUse} />
+        <Stack.Screen name="Team" component={Team} />
+        <Stack.Screen name="Partners" component={Partners} />
+        <Stack.Screen name="Settings" component={Settings} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,4 +1,10 @@
 {
   "name": "StellasonosApp",
-  "displayName": "StellasonosApp"
+  "displayName": "StellasonosApp",
+  "android": {
+    "package": "com.anonymous.stellasonosapp"
+  },
+  "ios": {
+    "bundleIdentifier": "com.anonymous.stellasonosapp"
+  }
 }

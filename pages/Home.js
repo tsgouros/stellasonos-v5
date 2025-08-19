@@ -1,6 +1,5 @@
 import React, { useState, useRef } from "react";
-import { useFonts, Inter_300Light } from '@expo-google-fonts/inter';
-import { PublicSans_400Regular } from '@expo-google-fonts/public-sans';
+import SideMenu from "../pages/SideMenu";
 import {
   Platform,
   StatusBar,
@@ -31,15 +30,16 @@ const playIcon = require("../assets/Icon_ion-play-circle_2x.png");
 const searchIcon = require("../assets/Search_2x.png");
 const menuIcon = require("../assets/Menu_2x.png");
 
-
 export default function Home({ navigation }) {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
   const [searchText, setSearchText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputIndex, setInputIndex] = useState("1");
   const [showDropdown, setShowDropdown] = useState(false);
 
   const panRef = useRef();
-  const flatListRef = useRef(); // Added FlatList ref
+  const flatListRef = useRef();
 
   const filteredImages =
     searchText.length > 0
@@ -71,7 +71,7 @@ export default function Home({ navigation }) {
     setSearchText("");
     setShowDropdown(false);
     Keyboard.dismiss();
-    scrollToThumbnail(index); // Center selected thumbnail
+    scrollToThumbnail(index);
   };
 
   const handleInputChange = (text) => setInputIndex(text);
@@ -80,7 +80,7 @@ export default function Home({ navigation }) {
     const newIndex = parseInt(inputIndex) - 1;
     if (!isNaN(newIndex) && newIndex >= 0 && newIndex <= maxIndex) {
       setCurrentIndex(newIndex);
-      scrollToThumbnail(newIndex); // Center
+      scrollToThumbnail(newIndex);
     } else {
       setInputIndex((currentIndex + 1).toString());
     }
@@ -92,7 +92,7 @@ export default function Home({ navigation }) {
       const newIndex = currentIndex + 1;
       setCurrentIndex(newIndex);
       setInputIndex((newIndex + 1).toString());
-      scrollToThumbnail(newIndex); // Center
+      scrollToThumbnail(newIndex);
     }
   };
 
@@ -101,19 +101,22 @@ export default function Home({ navigation }) {
       const newIndex = currentIndex - 1;
       setCurrentIndex(newIndex);
       setInputIndex((newIndex + 1).toString());
-      scrollToThumbnail(newIndex); // Center
+      scrollToThumbnail(newIndex);
     }
   };
 
   const navigateToImagePage = (image) => {
-    navigation.navigate("TestSeg", { image });
+
+    if (!image) {
+    console.warn("No image selected to navigate");
+    return;
+  }
+    navigation.navigate("ImagePage", { image });
     console.log("Navigating to Image page with image: " + image.title);
   };
 
-  const goBack = () => navigation.goBack();
-
   const onPanGestureEvent = (event) => {
-    const { translationX, state } = event.nativeEvent;
+    const { translationX } = event.nativeEvent;
 
     if (event.nativeEvent.state === 5) {
       if (translationX < -50 && currentIndex < maxIndex) {
@@ -346,7 +349,7 @@ export default function Home({ navigation }) {
     >
       <Image
         source={{ uri: item.src }}
-        style={{ width:90, height: 90, borderRadius: 6 }}
+        style={{ width: 90, height: 90, borderRadius: 6 }}
       />
     </TouchableOpacity>
   );
@@ -355,11 +358,16 @@ export default function Home({ navigation }) {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaView style={dynamicStyles.container}>
 
+        {/* Side menu only shows when isMenuOpen true */}
+        {isMenuOpen && (
+          <SideMenu onClose={() => setIsMenuOpen(false)} />
+        )}
+
         {/* HEADER */}
         <View style={dynamicStyles.headerContainer}>
           {/* Left Menu Button */}
           <TouchableOpacity
-            onPress={() => console.log("Menu icon pressed")}
+            onPress={() => setIsMenuOpen(true)}
             style={[dynamicStyles.headerIconWrapper, dynamicStyles.leftIcon]}
           >
             <Image
@@ -530,7 +538,6 @@ export default function Home({ navigation }) {
                   index,
                 })}
               />
-
             </View>
 
             <StatusBar />

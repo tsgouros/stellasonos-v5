@@ -1,4 +1,4 @@
-package com.stellasonosapp
+package com.anonymous.stellasonosapp
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

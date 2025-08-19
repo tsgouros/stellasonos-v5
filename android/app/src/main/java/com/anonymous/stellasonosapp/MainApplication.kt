@@ -1,4 +1,4 @@
-package com.stellasonosapp
+package com.anonymous.stellasonosapp
 
 import android.app.Application
 import com.facebook.react.PackageList
