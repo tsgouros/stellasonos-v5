@@ -3,61 +3,55 @@ import {
   View,
   StyleSheet,
   Image,
-  TouchableOpacity,
   Text,
   Dimensions,
   ActivityIndicator,
-  Platform
+  Platform,
+  TouchableOpacity,
 } from "react-native";
-import SuperImage from "../utils/SuperImageTEMP.js";
 
 export default function ImagePage({ route, navigation }) {
   const { image } = route.params;
-  const superImage = useRef(new SuperImage(image)).current;
+  const superImageRef = useRef(null);
+  const isMountedRef = useRef(true);
 
-  // State variables
   const [cursorCoords, setCursorCoords] = useState({ x: null, y: null });
-  const [cursorColorHex, setCursorColorHex] = useState("#ffffff");
   const [segmentNumber, setSegmentNumber] = useState(null);
+  const [segmentInfo, setSegmentInfo] = useState(null);
   const [lastTap, setLastTap] = useState(0);
   const [imageSize, setImageSize] = useState(null);
   const [shouldRotate, setShouldRotate] = useState(false);
+  const [isSegmented, setIsSegmented] = useState(false);
 
-  // Screen dimensions
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
+  const backButtonTop = Platform.select({ ios: 80, android: 50 });
 
-  // Back button position
-  const backButtonTop = Platform.select({
-    ios: 80,
-    android: 50
-  });
-
-  // Convert display coordinates to image coordinates
-  function displayToImageCoords(displayX, displayY, displayWidth, displayHeight, shouldRotate) {
-    if (shouldRotate) {
+  function displayToImageCoords(displayX, displayY, displayWidth, displayHeight, rotate) {
+    if (!superImageRef.current) return { x: 0, y: 0 };
+    
+    if (rotate) {
       const normalizedX = displayX / displayWidth;
       const normalizedY = displayY / displayHeight;
-      
-      const imgX = Math.floor(normalizedY * superImage.win.imgWidth);
-      const imgY = Math.floor((1 - normalizedX) * superImage.win.imgHeight);
-      
+
+      const imgX = Math.floor(normalizedY * superImageRef.current.win.imgWidth);
+      const imgY = Math.floor((1 - normalizedX) * superImageRef.current.win.imgHeight);
+
       return {
-        x: Math.max(0, Math.min(superImage.win.imgWidth - 1, imgX)),
-        y: Math.max(0, Math.min(superImage.win.imgHeight - 1, imgY))
+        x: Math.max(0, Math.min(superImageRef.current.win.imgWidth - 1, imgX)),
+        y: Math.max(0, Math.min(superImageRef.current.win.imgHeight - 1, imgY)),
       };
     } else {
-      const imgX = Math.floor((displayX / displayWidth) * superImage.win.imgWidth);
-      const imgY = Math.floor((displayY / displayHeight) * superImage.win.imgHeight);
-      
+      const imgX = Math.floor((displayX / displayWidth) * superImageRef.current.win.imgWidth);
+      const imgY = Math.floor((displayY / displayHeight) * superImageRef.current.win.imgHeight);
+
       return {
-        x: Math.max(0, Math.min(superImage.win.imgWidth - 1, imgX)),
-        y: Math.max(0, Math.min(superImage.win.imgHeight - 1, imgY))
+        x: Math.max(0, Math.min(superImageRef.current.win.imgWidth - 1, imgX)),
+        y: Math.max(0, Math.min(superImageRef.current.win.imgHeight - 1, imgY)),
       };
     }
   }
 
-  // Calculate image display size
   function getFitSize(imgW, imgH, maxW, maxH) {
     const imgRatio = imgW / imgH;
     const maxRatio = maxW / maxH;
@@ -66,57 +60,62 @@ export default function ImagePage({ route, navigation }) {
       : { width: maxH * imgRatio, height: maxH };
   }
 
-  // Handle cursor updates and audio playback
   async function updateCursor(absoluteX, absoluteY) {
+    if (!superImageRef.current || !imageSize || !isSegmented) return;
+
     setCursorCoords({ x: absoluteX, y: absoluteY });
 
-    try {
-      const imageLeft = (screenWidth - imageSize.width) / 2;
-      const imageTop = (screenHeight - imageSize.height) / 2;
-      
-      const relativeX = absoluteX - imageLeft;
-      const relativeY = absoluteY - imageTop;
+    const imageLeft = (screenWidth - imageSize.width) / 2;
+    const imageTop = (screenHeight - imageSize.height) / 2;
 
-      const isWithinImage =
-        relativeX >= 0 && relativeX <= imageSize.width &&
-        relativeY >= 0 && relativeY <= imageSize.height;
+    const displayX = absoluteX - imageLeft;
+    const displayY = absoluteY - imageTop;
 
-      if (isWithinImage) {
-        const { x: imgX, y: imgY } = displayToImageCoords(
-          relativeX,
-          relativeY,
-          imageSize.width,
-          imageSize.height,
-          shouldRotate
-        );
+    const isWithinImage =
+      displayX >= 0 && displayX <= imageSize.width &&
+      displayY >= 0 && displayY <= imageSize.height;
 
-        // Get color and segment data
-        const color = superImage.getColorAt(imgX, imgY);
-        setCursorColorHex(color);
+    if (isWithinImage) {
+      // Convert display coordinates to image pixel coordinates
+      const { x: imgX, y: imgY } = displayToImageCoords(
+        displayX,
+        displayY,
+        imageSize.width,
+        imageSize.height,
+        shouldRotate
+      );
 
-        const idx = imgY * superImage.win.imgWidth + imgX;
-        const segment = superImage.segmentData[idx];
+      // Get segment number and information using IMAGE PIXEL coordinates
+      if (superImageRef.current.segmentData) {
+        const idx = imgY * superImageRef.current.win.imgWidth + imgX;
+        const segment = superImageRef.current.segmentData[idx];
         setSegmentNumber(segment);
-
-        // Play audio for this segment
-        superImage.play(imgX, imgY);
-      } else {
-        setCursorColorHex("#ffffff");
-        setSegmentNumber(-1);
-        superImage.stopSound(); // Stop audio when outside image
+        
+        // Get complete segment information
+        const info = superImageRef.current.getSegmentInfo(segment);
+        setSegmentInfo(info);
       }
-    } catch (err) {
-      console.warn("Error in updateCursor:", err);
-      setCursorColorHex("#ffffff");
+
+      // Play sound using IMAGE PIXEL coordinates
+      const playX = (imgX / superImageRef.current.win.imgWidth) * superImageRef.current.win.winWidth;
+      const playY = (imgY / superImageRef.current.win.imgHeight) * superImageRef.current.win.winHeight;
+      
+      superImageRef.current.play(playX, playY);
+    } else {
+      // Get info for outside segment
+      const info = superImageRef.current.getSegmentInfo(-1);
+      setSegmentInfo(info);
+      
       setSegmentNumber(-1);
+      // Play the outside segment (-1)
+      superImageRef.current.play(-1, -1);
     }
   }
 
-  // Handle touch events
   function handleTouch(event) {
     const now = Date.now();
     if (now - lastTap < 500) {
-      superImage.stopSound(); // Stop audio when navigating back
+      superImageRef.current?.stopSound();
       navigation.goBack();
       return;
     }
@@ -126,43 +125,61 @@ export default function ImagePage({ route, navigation }) {
     updateCursor(pageX, pageY);
   }
 
-  // Initialize image and audio
   useEffect(() => {
-    async function setup() {
-      const imageData = { width: 10, height: 10 };
-      await superImage.performSegmentation(imageData);
+    isMountedRef.current = true;
+    
+    // Import and initialize SuperImage asynchronously
+    const initializeSuperImage = async () => {
+      try {
+        const SuperImageModule = await import('../utils/SuperImageTEMP.js');
+        superImageRef.current = new SuperImageModule.default(image);
+        
+        // Setup image after SuperImage is initialized
+        const uri = superImageRef.current.currentImage().src;
+        
+        Image.getSize(
+          uri,
+          async (width, height) => {
+            if (!isMountedRef.current) return;
 
-      const uri = superImage.currentImage().src;
-      Image.getSize(
-        uri,
-        (width, height) => {
-          const aspectRatio = width / height;
-          const rotate = aspectRatio > 1.3;
-          const finalSize = rotate
-            ? getFitSize(height, width, screenWidth * 0.95, screenHeight * 0.95)
-            : getFitSize(width, height, screenWidth * 0.95, screenHeight * 0.95);
-          
-          setShouldRotate(rotate);
-          setImageSize(finalSize);
-        },
-        (error) => {
-          console.warn("Failed to load image dimensions", error);
-        }
-      );
-    }
+            const aspectRatio = width / height;
+            const rotate = aspectRatio > 1.3;
+            const finalSize = rotate
+              ? getFitSize(height, width, screenWidth * 0.95, screenHeight * 0.95)
+              : getFitSize(width, height, screenWidth * 0.95, screenHeight * 0.95);
 
-    setup();
+            setShouldRotate(rotate);
+            setImageSize(finalSize);
 
-    // Cleanup audio when component unmounts
-    return () => {
-      superImage.stopSound();
+            await superImageRef.current.performSegmentation({ width, height });
+            setIsSegmented(true);
+          },
+          (error) => console.warn("Failed to load image dimensions", error)
+        );
+      } catch (error) {
+        console.error("Error initializing SuperImage:", error);
+      }
     };
-  }, []);
+
+    initializeSuperImage();
+
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      superImageRef.current?.stopSound();
+    });
+
+    return () => {
+      isMountedRef.current = false;
+      unsubscribe();
+      superImageRef.current?.stopSound();
+      superImageRef.current?.destroy();
+    };
+  }, [image, navigation, screenWidth, screenHeight]);
 
   if (!imageSize) {
     return (
       <View style={styles.imageContainer}>
         <ActivityIndicator size="large" />
+        <Text style={styles.loadingText}>Loading image and audio...</Text>
       </View>
     );
   }
@@ -172,10 +189,10 @@ export default function ImagePage({ route, navigation }) {
       <TouchableOpacity
         style={[styles.backButton, { top: backButtonTop }]}
         onPress={() => {
-          superImage.stopSound();
+          superImageRef.current?.stopSound();
           navigation.navigate("Home");
         }}
-        hitSlop={{top: 20, bottom: 20, left: 20, right: 20}}
+        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
       >
         <Text style={styles.backButtonText}>← Back to Home</Text>
       </TouchableOpacity>
@@ -197,7 +214,7 @@ export default function ImagePage({ route, navigation }) {
               height: shouldRotate ? imageSize.width : imageSize.height,
               transform: shouldRotate ? [{ rotate: "90deg" }] : [],
             }}
-            source={{ uri: superImage.currentImage().src }}
+            source={{ uri: superImageRef.current?.currentImage().src }}
             resizeMode="contain"
           />
         </View>
@@ -220,11 +237,25 @@ export default function ImagePage({ route, navigation }) {
             <Text style={styles.infoText}>
               Screen: {cursorCoords.x.toFixed(0)}, {cursorCoords.y.toFixed(0)}
             </Text>
-            <Text style={styles.infoText}>Color: {cursorColorHex}</Text>
             <Text style={styles.infoText}>
               Segment: {segmentNumber !== null ? segmentNumber : "-"}
               {segmentNumber === -1 && " (Outside image)"}
             </Text>
+            
+            {/* Display segment information */}
+            {segmentInfo && (
+              <>
+                <View style={{height: 1, backgroundColor: 'white', marginVertical: 4}} />
+                <Text style={styles.infoText}>Sound: {segmentInfo.sound}</Text>
+                <Text style={styles.infoText}>Haptic: {segmentInfo.haptic}</Text>
+                <Text style={styles.infoText}>
+                  Auto-loop: {segmentInfo.switchPlayer ? 'Yes' : 'No'}
+                </Text>
+                <Text style={styles.infoText}>
+                  Touches: {segmentInfo.count || 0}
+                </Text>
+              </>
+            )}
           </View>
         </>
       )}
@@ -269,9 +300,15 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 6,
     zIndex: 50,
+    minWidth: 200,
   },
   infoText: {
     color: "white",
     fontSize: 14,
+    marginVertical: 2,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: "#333",
   },
 });

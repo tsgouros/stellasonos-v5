@@ -41,7 +41,7 @@
         "1": { "sound": "https://sgouros.com/stellasonos/samples/flute/A4.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [500] }, "switchPlayer": false },
         "2": { "sound": "https://sgouros.com/stellasonos/samples/harp/B5.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
         "3": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/Cs4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true }
-      } 
+      }
     }
   }
   
