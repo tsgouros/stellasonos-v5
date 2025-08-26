@@ -186,7 +186,7 @@ export default class SuperImage {
         }
       }
       console.log("Counted stars #: ", countStar, this.starData, this.segmentData)
-
+      
     // connectedComponent return numSegment as an object -- fetch its .value; that's why couldn't go into loops for so long!
       // for (let i = 1; i < numSegment.value; i++) {
       //   const x = statsArray[i * 5 + ConnectedComponentsTypes.CC_STAT_LEFT];
