@@ -151,7 +151,8 @@ export default function ImagePage({ route, navigation }) {
             setShouldRotate(rotate);
             setImageSize(finalSize);
 
-            await superImageRef.current.performSegmentation({ width, height });
+            // await superImageRef.current.performSegmentation({ width, height });
+            await superImageRef.current.performSegmentation();
             setIsSegmented(true);
           },
           (error) => console.warn("Failed to load image dimensions", error)

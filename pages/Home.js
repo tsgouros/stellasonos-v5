@@ -111,7 +111,7 @@ export default function Home({ navigation }) {
     console.warn("No image selected to navigate");
     return;
   }
-    navigation.navigate("ImagePage", { image });
+    navigation.navigate("TestSeg", { image });
     console.log("Navigating to Image page with image: " + image.title);
   };
 
