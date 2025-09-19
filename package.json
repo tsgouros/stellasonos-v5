@@ -24,6 +24,7 @@
     "ml-kmeans": "^6.0.0",
     "png-js": "^1.0.0",
     "react": "19.0.0",
+    "react-is": "^19.1.1",
     "react-native": "0.79.3",
     "react-native-fast-opencv": "^0.4.6",
     "react-native-gesture-handler": "^2.26.0",
