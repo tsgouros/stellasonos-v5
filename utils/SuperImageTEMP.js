@@ -52,6 +52,7 @@ export default class SuperImage {
       if (imageConfig.hasOwnProperty(segmentKey)) {
         const { sound: soundUrl, volume } = imageConfig[segmentKey];
         if (soundUrl) {
+<<<<<<< HEAD
           try {
             this.players[segmentKey] = new Player(soundUrl, {
               autoDestroy: false,
@@ -104,6 +105,7 @@ export default class SuperImage {
       return "#ffffff";
     }
 
+    console.log(this.segmentData)
     const segment = this.segmentData[idx];
     const segmentKey = segment.toString();
 
@@ -117,7 +119,8 @@ export default class SuperImage {
   }
 
   async loadBase64() {
-    console.log(">> Loading base64 from:", this.currentImage().src);
+    console.log("-- Loading base64 from:", this.currentImage().src);
+    console.log(this.currentImage().src)
     let imagePath;
     const resp = await RNFetchBlob.config({ fileCache: true })
       .fetch("GET", this.currentImage().src);
@@ -277,6 +280,34 @@ export default class SuperImage {
         console.log(`Segment ${segmentKey}: ${segmentConfig.sound}`);
       }
     }
+
+    // for (let y = 0; y < imgHeight; y++) {
+    //   for (let x = 0; x < imgWidth; x++) {
+    //     let segment;
+    //     if (x === 0 || y === 0 || x === imgWidth - 1 || y === imgHeight - 1) segment = -1;
+    //     else if (x < imgWidth / 2 && y < imgHeight / 2) segment = 0;
+    //     else if (x >= imgWidth / 2 && y < imgHeight / 2) segment = 1;
+    //     else if (x < imgWidth / 2 && y >= imgHeight / 2) segment = 2;
+    //     else segment = 3;
+
+    //     this.segmentData[y * imgWidth + x] = segment;
+    //   }
+    // }
+    console.log("pre first 'prepare'")
+    this.initAudioPlayers();
+    console.log("post first 'prepare'") // ERROR: not printed
+    try {
+      console.log("pre completion sound")
+      const completionSound = new Player(
+        'https://commondatastorage.googleapis.com/codeskulptor-assets/week7-brrring.m4a',
+        { autoDestroy: true }
+      );
+      console.log("post completion sound")
+      console.log(completionSound) // not printing, problem here
+      completionSound.prepare((err) => { if (!err) completionSound.play(); });
+    } catch (error) {
+      console.error('Error with completion sound:', error);
+    }
   }
 
   play(x, y) {
@@ -303,6 +334,7 @@ export default class SuperImage {
       return;
     }
 
+    console.log(this.segmentData)
     const segmentValue = this.segmentData[idx];
     const segmentKey = segmentValue.toString();
 
