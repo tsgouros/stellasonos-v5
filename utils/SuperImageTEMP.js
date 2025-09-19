@@ -57,7 +57,7 @@ export default class SuperImage {
             autoDestroy: false,
             continuesToPlayInBackground: false
           });
-          console.log(this.players[segmentKey]) //printed, no prob
+          console.log(this.players[segmentKey]) // printed, no prob
           this.players[segmentKey].play((err) => {
             if (!err) this.players[segmentKey].volume = volume || this.initialVolume;
           });
@@ -83,6 +83,7 @@ export default class SuperImage {
     const idx = pos.y * this.win.imgWidth + pos.x;
     if (idx < 0 || idx >= this.segmentData.length) return "#ffffff";
 
+    console.log(this.segmentData)
     const segment = this.segmentData[idx];
     const segmentKey = segment.toString();
     
@@ -99,7 +100,8 @@ export default class SuperImage {
 
   // temporily download image from url, then load it as a base64 string
   async loadBase64() {
-    console.log(">> Loading base64 from:", this.currentImage().src);
+    console.log("-- Loading base64 from:", this.currentImage().src);
+    console.log(this.currentImage().src)
     let imagePath;
     const resp = await RNFetchBlob.config({ fileCache: true })
       .fetch("GET", this.currentImage().src);
@@ -136,7 +138,7 @@ export default class SuperImage {
     // const size = imgWidth * imgHeight;
 
     // TODO: check just use superimage object
-    console.log("--in function: performSegmentation");
+    console.log(">>>> in function: performSegmentation");
 
     const src = await this.loadBase64()
     if (!src) throw new Error("src base64 string not ready yet");
@@ -166,12 +168,12 @@ export default class SuperImage {
 
 
     console.log('----4) thresholding...');
-    // TODO: set dynamic thresh by taking intensity histogram
-    var thresh = 50
+    // adaptiveThreshold dynamically assign a threshold when looking at area of size=neighbor*neighbor, must be odd to have a center
+    var neighbor = 61
     let threshMat = OpenCV.createObject(ObjectType.Mat, 0, 0, DataTypes.CV_8UC1);
-    await OpenCV.invoke("adaptiveThreshold", grayMat, threshMat, 255, AdaptiveThresholdTypes.ADAPTIVE_THRESH_MEAN_C, ThresholdTypes.THRESH_BINARY, 61, 0);
+    await OpenCV.invoke("adaptiveThreshold", grayMat, threshMat, 255, AdaptiveThresholdTypes.ADAPTIVE_THRESH_MEAN_C, ThresholdTypes.THRESH_BINARY, neighbor, 0);
     // await OpenCV.invoke("threshold", grayMat, threshMat, thresh, 255, ThresholdTypes.THRESH_BINARY);
-    // https://chatgpt.com/s/t_68b0d721107c81919aa9b841ae88d612
+    // TODO: approximate a global OTSU threshold by intensity histogram, more computation: https://chatgpt.com/s/t_68b0d721107c81919aa9b841ae88d612
     this.matJS = OpenCV.toJSValue(threshMat)
     // console.log("threshMat", OpenCV.toJSValue(threshMat));
 
@@ -185,11 +187,11 @@ export default class SuperImage {
       console.log("numSegment", numSegment)
       const labelsData = OpenCV.matToBuffer(labels, 'int32');
       const labelArray = new Int32Array(labelsData.buffer);
-      console.log('labelsData =', labelsData, labelArray);
+      console.log('labelsData =', labelsData);
 
       const statsData = OpenCV.matToBuffer(stats, 'int32');
       const statsArray = new Int32Array(statsData.buffer);
-      console.log('statsData = ', statsData, statsArray)
+      console.log('statsData = ', statsData)
 
       let areas = [];
       // start from 1: label 0 is background
@@ -199,25 +201,29 @@ export default class SuperImage {
       }
       // sort descending by area
       areas.sort((a, b) => b.area - a.area);
-      console.log(areas, areas[1].area)
+      console.log("segment areas sorted: ", areas)
+
       // TODO: DISABLED, dynamically assign maxSegment, but jump definition seems off
       // var maxSegment = 0
+      // var segmentCutoff = 1/2
       // for (let i = 0; i < areas.length - 1; i++) {
-      //   if (areas[i].area / areas[i+1].area > 1.1) { // large jump
+      //   if (areas[i].area / areas[i+1].area > segmentCutoff) { // large jump
       //     maxSegment = i + 1;
       //     break;
       //   }
       // }
+      // TODO: maxSegment = max of loop result of no.segment
 
-      // TODO: if maxSegment=0, then maxSegment=10
-      // 0 is background, omit that, and start from the largest "meaningful" segment
-      // TODO: make background segment=0 a separate array
-      let largeSegments = areas.slice(1, maxSegment);
-      console.log("Top largest segments:", maxSegment, largeSegments);
+      // 0 is background, 1 is the largest "meaningful" segment
+      var maxSegment = 10
+      let largeSegments = areas.slice(0, maxSegment);
+      console.log("segment areas largest cut: ", maxSegment, largeSegments);
+      // for easy concat to this.segmentData
       const topLabels = largeSegments.map(seg => seg.label);
-      // console.log("topLabels);
+      // console.log(topLabels);
 
       let countStar = 0
+      let starLabel = maxSegment + 1
       // console.log(this.win.imgHeight, this.win.imgWidth)
       for (let y = 0; y < this.win.imgHeight; y++) {
         for (let x = 0; x < this.win.imgWidth; x++) {
@@ -226,18 +232,24 @@ export default class SuperImage {
           const area = statsArray[label * 5 + ConnectedComponentsTypes.CC_STAT_AREA];
           // Debug: check pixel index, its segment ID, and the segment's area
           // console.log("Pixel index:", idx, "Segment ID:", label, "Area:", area);
-          if (area <= 10) { 
-            this.starData[idx] = label;
-            countStar++
-            continue;
-          }
+
+          // easier to treat background label=0 separately later, during audio
           if (topLabels.includes(label)) {
             this.segmentData[idx] = label;
             continue;
-          }  
+          }
+          // all of the small segments will be stars and play a clinging sound, assign to a uniform label=maxSegment+1
+          if (area <= 10) { 
+            this.starData[idx] = label;
+            this.segmentData[idx] = starLabel;
+            countStar++
+            continue;
+          }
+          // push the rest to a uniform label=background, too small to look at individually
+          this.segmentData[idx] = 0;
         }
       }
-      console.log("Counted stars #: ", countStar, this.starData, this.segmentData)
+      console.log("FINAL: Counted stars # ", countStar, this.starData, this.segmentData)
     } catch (err) {console.log(err)}    
 
     OpenCV.clearBuffers();
@@ -287,7 +299,7 @@ export default class SuperImage {
     // }
     console.log("pre first 'prepare'")
     this.initAudioPlayers();
-    console.log("post first 'prepare'") // not printed, 
+    console.log("post first 'prepare'") // ERROR: not printed
     try {
       console.log("pre completion sound")
       const completionSound = new Player(
@@ -309,6 +321,7 @@ export default class SuperImage {
     const idx = pos.y * this.win.imgWidth + pos.x;
     if (idx < 0 || idx >= this.segmentData.length) return;
 
+    console.log(this.segmentData)
     const segmentValue = this.segmentData[idx];
     const segmentKey = segmentValue.toString();
     
@@ -378,6 +391,7 @@ export default class SuperImage {
   stopSound(callback) {
     this.isPlaying = false;
     this.lastSegment = null;
+    // TODO: check if activePlay is properly initialized
     if (this.activePlayer) this.activePlayer.stop(() => { if (callback) callback(); });
     else if (callback) callback();
     clearTimeout(this.switchTimer);
