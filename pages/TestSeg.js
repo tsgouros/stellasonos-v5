@@ -22,6 +22,7 @@ export default function TestSeg({ route, navigation }) {
   const [cursorColorHex, setCursorColorHex] = useState("#ffffff");
   const [segmentNumber, setSegmentNumber] = useState(null);
   const [lastTap, setLastTap] = useState(0);
+  const [segUri, setSegUri] = useState(null);
 
   const touchAreaWidth = Dimensions.get("window").width;
   const touchAreaHeight = Dimensions.get("window").height;
@@ -33,6 +34,10 @@ export default function TestSeg({ route, navigation }) {
         // const imageData = { width: 10, height: 10 };
         // check: should i just be the current image, then no param?
         await superImage.performSegmentation();
+        
+        const uri = await superImage.inspectSegments();
+        setSegUri(uri); 
+        console.log("segUri preview:", segUri?.slice(0,50));
     }
     
     console.log("called performSegmentation")
@@ -111,10 +116,14 @@ export default function TestSeg({ route, navigation }) {
         source={{ uri: superImage.currentImage().src }}
       />
 
-      <Image
-        style={styles.image}
-        source={{ uri: superImage.getMatImage() }}
-      />
+      {segUri ? (
+        <Image
+          style={styles.image}
+          source={{ uri: segUri }}
+        />
+      ) : (
+        <Text>Segmentation not ready...</Text>
+      )}
 
       {cursorCoords.x !== null && cursorCoords.y !== null && (
         <View
