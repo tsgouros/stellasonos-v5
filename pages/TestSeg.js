@@ -9,7 +9,7 @@ import {
   Dimensions,
 } from "react-native";
 
-import SuperImage from "../utils/SuperImageTEMP.js";
+import SuperImage from "../utils/SuperImage.js";
 
 export default function TestSeg({ route, navigation }) {
   console.log("initializing TestSeg")

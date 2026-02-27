@@ -28,17 +28,9 @@
     "React-jsi": [
       "0.79.3"
     ],
-    "glog": [
-
-    ],
-    "hermes-engine": [
-
-    ],
-    "React-hermes": [
-
-    ],
-    "React-debug": [
-
-    ]
+    "glog": [],
+    "hermes-engine": [],
+    "React-hermes": [],
+    "React-debug": []
   }
 }

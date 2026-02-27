@@ -223,7 +223,7 @@ useEffect(() => {
     try {
       // Assuming the SuperImage class is correctly exported from this path
       // NOTE: You must ensure this path is correct in your project
-      const SuperImageModule = await import('../utils/SuperImageTEMP.js');
+      const SuperImageModule = await import('../utils/SuperImage.js');
       superImageRef.current = new SuperImageModule.default(image);
     
       // Setup image after SuperImage is initialized

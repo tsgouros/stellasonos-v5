@@ -1,12 +1,12 @@
 # Android build folders
 android/build/
 android/app/build/
-
 android/app/.cxx/
 
 # iOS build folders
 ios/build/
-
+ios/Pods
+ios/Podfile.lock
 
 
 # Native build outputs that cause GitHub file size errors
