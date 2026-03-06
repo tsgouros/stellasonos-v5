@@ -1,1 +1,0 @@
-../../../../../node_modules/react-native-fast-opencv/cpp/FOCV_Storage.hpp

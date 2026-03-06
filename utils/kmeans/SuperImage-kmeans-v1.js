@@ -1,10 +1,13 @@
+// ********* 260226 Ning Lan ******** //
+// DISCONTINUED k-means algorithm for color separating segments, used with kmeans.js
+
 import React, {useState, useEffect} from 'react';
 import {View,Image,ActivityIndicator} from "react-native";
-
+import kmeans from "../utils/kmeans/kmeans.js"
+// import kmeans from 'ml-kmeans';
 import { convertToRGB } from 'react-native-image-to-rgb';
 import { OpenCV } from 'react-native-fast-opencv';
 import { LineTypes, ObjectType, ThresholdTypes, ColorConversionCodes, DataTypes, ConnectedComponentsTypes, RetrievalModes, ContourApproximationModes } from 'react-native-fast-opencv';
-import kmeans from 'ml-kmeans';
 
 // utils/SuperImage.js
 export default class SuperImage {

@@ -1,1 +1,0 @@
-../../../../../node_modules/react-native-fast-opencv/cpp/react-native-fast-opencv.h
