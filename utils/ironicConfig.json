@@ -1,11 +1,57 @@
 {
     "colors": {
+      "Geminga": {
+        "-1": { "sound": "https://sgouros.com/stellasonos/samples/piano/E3.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "impactLight" }, "switchPlayer": false },
+        "0": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/G1.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "1": { "sound": "https://sgouros.com/stellasonos/samples/harp/B5.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
+        "2": { "sound": "https://sgouros.com/stellasonos/samples/cello/A2.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
+        "3": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/D4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "4": { "sound": "https://sgouros.com/stellasonos/samples/organ/C3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "5": { "sound": "https://sgouros.com/stellasonos/samples/clarinet/D4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "6": { "sound": "https://sgouros.com/stellasonos/samples/trombone/C2.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "7": { "sound": "https://sgouros.com/stellasonos/samples/trumpet/F3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "8": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/A1.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "9": { "sound": "https://sgouros.com/stellasonos/samples/flute/E3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "10": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/F4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "11": { "sound": "https://sgouros.com/stellasonos/samples/violin/C4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true }
+      },
+      "CL J1001": {
+        "-1": { "sound": "https://sgouros.com/stellasonos/samples/piano/E3.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "impactLight" }, "switchPlayer": false },
+        "0": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/G1.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "1": { "sound": "https://sgouros.com/stellasonos/samples/harp/B5.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
+        "2": { "sound": "https://sgouros.com/stellasonos/samples/cello/A2.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
+        "3": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/D4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "4": { "sound": "https://sgouros.com/stellasonos/samples/organ/C3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "5": { "sound": "https://sgouros.com/stellasonos/samples/clarinet/D4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "6": { "sound": "https://sgouros.com/stellasonos/samples/trombone/C2.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "7": { "sound": "https://sgouros.com/stellasonos/samples/trumpet/F3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "8": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/A1.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "9": { "sound": "https://sgouros.com/stellasonos/samples/flute/E3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "10": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/F4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "11": { "sound": "https://sgouros.com/stellasonos/samples/violin/C4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true }
+      },
+      "Zwicky 8338": {
+        "-1": { "sound": "https://sgouros.com/stellasonos/samples/piano/E3.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "impactLight" }, "switchPlayer": false },
+        "0": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/G1.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "1": { "sound": "https://sgouros.com/stellasonos/samples/harp/B5.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
+        "2": { "sound": "https://sgouros.com/stellasonos/samples/cello/A2.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
+        "3": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/D4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "4": { "sound": "https://sgouros.com/stellasonos/samples/organ/C3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "5": { "sound": "https://sgouros.com/stellasonos/samples/clarinet/D4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "6": { "sound": "https://sgouros.com/stellasonos/samples/trombone/C2.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "7": { "sound": "https://sgouros.com/stellasonos/samples/trumpet/F3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "8": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/A1.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "9": { "sound": "https://sgouros.com/stellasonos/samples/flute/E3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "10": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/F4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "11": { "sound": "https://sgouros.com/stellasonos/samples/violin/C4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true }
+      },
+
       "Test image": {
         "-1": { "sound": "https://sgouros.com/stellasonos/samples/piano/E3.mp3", "volume": 0.1, "haptic": { "type": "haptic", "spec": "impactLight" }, "switchPlayer": false },
-        "0": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/G1.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "0": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/G1.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": false },
         "1": { "sound": "https://sgouros.com/stellasonos/samples/flute/A4.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [500] }, "switchPlayer": false },
-        "2": { "sound": "https://sgouros.com/stellasonos/samples/harp/B5.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
-        "3": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/Cs4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true }
+        "2": { "sound": "https://sgouros.com/stellasonos/samples/cello/A2.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": false },
+        "3": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/Cs4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": false }
       },
       "MG B2016+112": {
         "-1": { "sound": "https://sgouros.com/stellasonos/samples/piano/E3.mp3", "volume": 0.1, "haptic": { "type": "haptic", "spec": "impactLight" }, "switchPlayer": false },
@@ -15,11 +61,19 @@
         "3": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/Cs4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true }
       },
       "V404 Cygni": {
-        "-1": { "sound": "https://sgouros.com/stellasonos/samples/piano/E3.mp3", "volume": 0.1, "haptic": { "type": "haptic", "spec": "impactLight" }, "switchPlayer": false },
+        "-1": { "sound": "https://sgouros.com/stellasonos/samples/piano/E3.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "impactLight" }, "switchPlayer": false },
         "0": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/G1.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
-        "1": { "sound": "https://sgouros.com/stellasonos/samples/flute/A4.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [500] }, "switchPlayer": false },
-        "2": { "sound": "https://sgouros.com/stellasonos/samples/harp/B5.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
-        "3": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/Cs4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true }
+        "1": { "sound": "https://sgouros.com/stellasonos/samples/harp/B5.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
+        "2": { "sound": "https://sgouros.com/stellasonos/samples/cello/A2.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "notificationSuccess" }, "switchPlayer": true },
+        "3": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/D4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "4": { "sound": "https://sgouros.com/stellasonos/samples/organ/C3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "5": { "sound": "https://sgouros.com/stellasonos/samples/clarinet/D4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "6": { "sound": "https://sgouros.com/stellasonos/samples/trombone/C2.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "7": { "sound": "https://sgouros.com/stellasonos/samples/trumpet/F3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "8": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/A1.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "9": { "sound": "https://sgouros.com/stellasonos/samples/flute/E3.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "10": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/F4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
+        "11": { "sound": "https://sgouros.com/stellasonos/samples/violin/C4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true }
       },
       "Abell 1775": {
         "-1": { "sound": "https://sgouros.com/stellasonos/samples/piano/E3.mp3", "volume": 0.1, "haptic": { "type": "haptic", "spec": "impactLight" }, "switchPlayer": false },

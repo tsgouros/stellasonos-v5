@@ -1,6 +1,103 @@
 {
   "images":[
     {
+      "src":"https://chandra.harvard.edu/photo/2017/geminga/geminga_comp.jpg",
+      "title":"Geminga",
+      "description":"A pulsar about 800 light years from Earth.",
+      "url":"https://chandra.harvard.edu/photo/2017/geminga",
+      "id":"110",
+      "layers":[
+        {
+          "src":"https://chandra.harvard.edu/photo/2017/geminga/geminga_comp.jpg",
+          "id":"110_comp",
+          "layer":"comp"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2017/geminga/geminga_xray.jpg",
+          "id":"110_xray",
+          "layer":"xray"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2017/geminga/geminga_ir.jpg",
+          "id":"110_ir",
+          "layer":"ir"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2017/geminga/geminga_b0355.jpg",
+          "id":"110_b0355",
+          "layer":"b0355"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2017/geminga/geminga_b0355_xray.jpg",
+          "id":"110_xray",
+          "layer":"xray"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2017/geminga/geminga_b0355_ir.jpg",
+          "id":"110_ir",
+          "layer":"ir"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2017/geminga/geminga_illus1.jpg",
+          "id":"110_illus1",
+          "layer":"illus1"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2017/geminga/geminga_illus2.jpg",
+          "id":"110_illus2",
+          "layer":"illus2"
+        }
+      ]
+    },
+    {
+      "src":"https://chandra.harvard.edu/photo/2016/clj1001/clj1001.jpg",
+      "title":"CL J1001",
+      "description":"A galaxy cluster located about 11.1 billion light years from Earth.",
+      "url":"https://chandra.harvard.edu/photo/2016/clj1001",
+      "id":"122",
+      "layers":[
+        {
+          "src":"https://chandra.harvard.edu/photo/2016/clj1001/clj1001_xray.jpg",
+          "id":"122_xray",
+          "layer":"xray"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2016/clj1001/clj1001_ir.jpg",
+          "id":"122_ir",
+          "layer":"ir"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2016/clj1001/clj1001_radio.jpg",
+          "id":"122_radio",
+          "layer":"radio"
+        }
+      ]
+    },
+    {
+      "src":"https://chandra.harvard.edu/photo/2015/z8338/z8338.jpg",
+      "title":"Zwicky 8338",
+      "description":"A galaxy cluster located almost 700 million light years from Earth.",
+      "url":"https://chandra.harvard.edu/photo/2015/z8338",
+      "id":"140",
+      "layers":[
+        {
+          "src":"https://chandra.harvard.edu/photo/2015/z8338/z8338_annotated.jpg",
+          "id":"140_annotated",
+          "layer":"annotated"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2015/z8338/z8338_xray.jpg",
+          "id":"140_xray",
+          "layer":"xray"
+        },
+        {
+          "src":"https://chandra.harvard.edu/photo/2015/z8338/z8338_optical.jpg",
+          "id":"140_optical",
+          "layer":"optical"
+        }
+      ]
+    },
+    {
       "src": "https://sgouros.com/nasa/testimage.png",
       "title": "Test image",
       "description": "Test image",
