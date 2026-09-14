@@ -1,0 +1,3 @@
+Command line invocation:
+    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -workspace StellasonosApp.xcworkspace -scheme StellasonosApp -configuration Debug -destination "platform=iOS Simulator,name=iPhone 14" clean build
+

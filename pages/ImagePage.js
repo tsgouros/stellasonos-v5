@@ -10,6 +10,10 @@ import {
   TouchableOpacity,
 } from "react-native";
 import SuperImage from "../utils/SuperImage.js";
+// Pure coordinate/layout math lives in its own file — see utils/imageLayout.js.
+// If the rotation or "fit to screen" math ever needs to change, that's the
+// only file that should need editing.
+import { displayToImageCoords, getFitSize } from "../utils/imageLayout.js";
 
 const AUDIO_THROTTLE_MS = 100;
 
@@ -36,37 +40,6 @@ export default function ImagePage({ route, navigation }) {
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
   const backButtonTop = Platform.select({ ios: 80, android: 50 });
-
-  function displayToImageCoords(displayX, displayY, displayWidth, displayHeight, rotate) {
-    const imgW = superImage.win.imgWidth;
-    const imgH = superImage.win.imgHeight;
-
-    if (rotate) {
-      const normalizedX = displayX / displayWidth;
-      const normalizedY = displayY / displayHeight;
-      const imgX = Math.floor((1 - normalizedY) * imgW);
-      const imgY = Math.floor(normalizedX * imgH);
-      return {
-        x: Math.max(0, Math.min(imgW - 1, imgX)),
-        y: Math.max(0, Math.min(imgH - 1, imgY)),
-      };
-    } else {
-      const imgX = Math.floor((displayX / displayWidth) * imgW);
-      const imgY = Math.floor((displayY / displayHeight) * imgH);
-      return {
-        x: Math.max(0, Math.min(imgW - 1, imgX)),
-        y: Math.max(0, Math.min(imgH - 1, imgY)),
-      };
-    }
-  }
-
-  function getFitSize(imgW, imgH, maxW, maxH) {
-    const imgRatio = imgW / imgH;
-    const maxRatio = maxW / maxH;
-    return imgRatio > maxRatio
-      ? { width: maxW, height: maxW / imgRatio }
-      : { width: maxH * imgRatio, height: maxH };
-  }
 
   // ===========================================
   // RAF LOOP — does all the work per frame
@@ -100,7 +73,8 @@ export default function ImagePage({ route, navigation }) {
           ({ x: imgX, y: imgY } = displayToImageCoords(
             displayX, displayY,
             imageSize.width, imageSize.height,
-            shouldRotate
+            shouldRotate,
+            superImage.win.imgWidth, superImage.win.imgHeight
           ));
 
           if (superImage.segmentData) {
@@ -156,7 +130,9 @@ export default function ImagePage({ route, navigation }) {
     touchRef.current = { x: pageX, y: pageY, dirty: true };
   }
 
-  //initialization   
+  // ===========================================
+  // INITIALIZATION — load the image, size it, run segmentation
+  // ===========================================
   useEffect(() => {
     isMountedRef.current = true;
 
@@ -202,6 +178,9 @@ export default function ImagePage({ route, navigation }) {
     };
   }, [image, navigation, screenWidth, screenHeight]);
 
+  // ===========================================
+  // Once segmentation is ready, play the "outside image" sound once
+  // ===========================================
   useEffect(() => {
     if (isSegmented && superImage) {
       const info = superImage.getSegmentInfo("-1");
@@ -215,6 +194,9 @@ export default function ImagePage({ route, navigation }) {
     }
   }, [isSegmented]);
 
+  // ===========================================
+  // RENDER
+  // ===========================================
   if (!imageSize) {
     return (
       <View style={styles.imageContainer}>

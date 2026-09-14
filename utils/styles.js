@@ -68,3 +68,4 @@ export const ImageStyles = StyleSheet.create({
     marginTop: 20,
   },
 });
+
