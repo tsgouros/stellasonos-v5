@@ -10,7 +10,8 @@ import {
 } from "react-native";
 
 import SuperImage from "../utils/SuperImage.js";
-// Same touch → image-pixel math used in ImagePage.js — see utils/imageLayout.js
+// Same touch → image-pixel math used in ImagePage.js 
+// see utils/imageLayout.js
 import { displayToImageCoords } from "../utils/imageLayout.js";
 
 export default function TestSeg({ route, navigation }) {

@@ -10,9 +10,12 @@ import {
   TouchableOpacity,
 } from "react-native";
 import SuperImage from "../utils/SuperImage.js";
-// Pure coordinate/layout math lives in its own file — see utils/imageLayout.js.
+
+// Pure coordinate/layout math lives in its own file 
+// see utils/imageLayout.js
 // If the rotation or "fit to screen" math ever needs to change, that's the
 // only file that should need editing.
+
 import { displayToImageCoords, getFitSize } from "../utils/imageLayout.js";
 
 const AUDIO_THROTTLE_MS = 100;
@@ -91,7 +94,7 @@ export default function ImagePage({ route, navigation }) {
           setSegmentNumber(-1);
         }
 
-        // Throttle audio exactly like the original — skip play if too soon
+        // Throttle audio  — skip play if too soon
         const now = Date.now();
         if (now - lastPlayTimeRef.current >= AUDIO_THROTTLE_MS) {
           lastPlayTimeRef.current = now;

@@ -1,25 +1,38 @@
 # Stellasonos — `utils/` code overview
 
-This documents how the image → segmentation → sound pipeline is organized,
-as of this pass. **No behavior was changed** in this pass — this is purely
-reorganizing `utils/SuperImage.js` into three files, plus adding comments.
-Every method that `pages/ImagePage.js` and `pages/TestSeg.js` call still
-exists with the same name and same behavior.
+This documents how the image → segmentation → sound pipeline is organized.
 
-## The three files
+## The four files
 
 ```
 utils/
 ├── segmentation.js     ← turns an image into a segment map (OpenCV)
 ├── audioController.js  ← plays sound + haptics for a segment
-└── SuperImage.js        ← orchestrator: owns state, wires the two together
+├── imageLayout.js      ← touch position → image pixel coordinate (pure math)
+└── SuperImage.js        ← orchestrator: owns state, wires the above together
 ```
 
-### `segmentation.js` — contained, swappable
+```mermaid
+flowchart LR
+    ImagePage["pages/ImagePage.js"] --> SuperImage
+    TestSeg["pages/TestSeg.js"] --> SuperImage
+    ImagePage --> Layout
+    TestSeg --> Layout
 
-This is the piece you asked to leave alone functionality-wise, now isolated
-into its own file so it can be swapped out later without touching anything
-else.
+    SuperImage["SuperImage.js<br/>orchestrator"] --> Segmentation
+    SuperImage --> Audio
+
+    Segmentation["segmentation.js"]
+    Audio["audioController.js"]
+    Layout["imageLayout.js"]
+    Config["ironicConfig.json"]
+
+    Audio --> Config
+```
+
+### `segmentation.js` 
+
+The segmentation code is completly contained and swappable. If you would like to swap out the current segmetnation logic with an improved version, edit it in `segmentation.js` . 
 
 **Entry point:**
 
@@ -35,7 +48,7 @@ runSegmentation(imageSrc, win, segmentData, starData, fillRGBArray, allocateDisp
 | **In (callback)** | `fillRGBArray(idx, r, g, b, a)` — called once per pixel to paint a display buffer; `allocateDisplayBuffer(win)` — optional, called once real size is known, before pixels are classified |
 | **Out** | `{ matJS, countStar }` — `matJS` is the thresholded image (used for a debug preview), `countStar` is how many star-sized specks were found |
 
-Internally it's the same five steps as before: download → resize (1/3) →
+Internally it's the five steps : download → resize (1/3) →
 grayscale + adaptive threshold → connected components → classify each pixel
 into star / top-10-segment / background. Each step is still its own
 exported function (`fetchImageAsBase64`, `resizeImage`, `applyThreshold`,
@@ -80,16 +93,24 @@ position math (`getPos`), and delegates to the two modules above:
 - `stopSound()`, `getSegmentInfo()`, `updateVolume()`, `destroy()`,
   `setCompletionCallback()` are thin pass-throughs to `this.audio`.
 
-**Public API is unchanged** — the same methods pages already call
-(`play`, `stopSound`, `performSegmentation`, `destroy`, `getSegmentInfo`,
-`setCompletionCallback`, `getColorAt`, `currentImage`, `inspectSegments`,
-`.win`, `.segmentData`) still exist with the same names and same behavior.
+### `imageLayout.js` — touch position → image pixel
 
-## Known pre-existing issue (not touched in this pass)
+Two pure functions. Given a touch and the current
+display size, figure out which image pixel that corresponds to.
+
+| Function | What it does |
+|---|---|
+| `displayToImageCoords(displayX, displayY, displayWidth, displayHeight, rotate, imgW, imgH)` | Converts a touch on the displayed image into a clamped `{x, y}` pixel coordinate on the underlying image. Handles the 270° rotation used for wide images on portrait screens. |
+| `getFitSize(imgW, imgH, maxW, maxH)` | Returns the largest `{width, height}` that fits an image inside a box while keeping its aspect ratio. |
+
+Used by both `pages/ImagePage.js` and `pages/TestSeg.js` — previously each
+page had its own inline copy of this math; now there's one copy both share.
+
+## Known pre-existing issue
 
 `getColorAt(x, y)` reads `pos.mx` / `pos.my`, but `getPos()` returns
-`{x, y}` — those fields don't exist, so `getColorAt` currently always
-returns white (`"#ffffff"`). This was already the case before this
-reorganization; it's called out here rather than fixed, since the ask was
-to document/contain without changing logic. Worth a follow-up fix (likely
-`pos.x` / `pos.y`) whenever you're ready to touch behavior.
+`{x, y}` 
+
+Those fields don't exist, so `getColorAt` currently always
+returns white (`"#ffffff"`). Worth a follow-up fix (likely
+`pos.x` / `pos.y`).

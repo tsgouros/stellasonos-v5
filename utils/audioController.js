@@ -192,7 +192,8 @@ export default class AudioController {
         return;
       }
 
-      // Trigger haptic first — it should fire even if the audio fails
+      // Trigger haptic first 
+      // it should fire even if the audio fails
       if (segmentConfig.haptic) this.triggerHaptic(segmentConfig.haptic);
 
       if (this.activePlayer) {
@@ -207,7 +208,8 @@ export default class AudioController {
             if (segmentConfig.switchPlayer) this.scheduleSwitch();
           });
         } else {
-          // Player is still loading (slow network?). Nothing we can do but skip this touch.
+          // If the player is still loading (maybe due to slow network?)
+          // Nothing we can do but skip this touch.
           console.warn(`Player for segment ${segmentKey} is not prepared yet. Skipping play.`);
         }
       }
