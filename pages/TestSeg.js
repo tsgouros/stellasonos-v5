@@ -10,6 +10,8 @@ import {
 } from "react-native";
 
 import SuperImage from "../utils/SuperImage.js";
+// Same touch → image-pixel math used in ImagePage.js — see utils/imageLayout.js
+import { displayToImageCoords } from "../utils/imageLayout.js";
 
 export default function TestSeg({ route, navigation }) {
   console.log("initializing TestSeg")
@@ -56,10 +58,14 @@ export default function TestSeg({ route, navigation }) {
       );
       setCursorColorHex(color);
 
-      // Calculate segment index at position
+      // Calculate segment index at position (TestSeg never rotates the image, unlike ImagePage)
       console.log("at updateCursor, assigning imgWidth");
-      const localX = Math.floor((x / touchAreaWidth) * superImage.win.imgWidth);
-      const localY = Math.floor((y / touchAreaHeight) * superImage.win.imgHeight);
+      const { x: localX, y: localY } = displayToImageCoords(
+        x, y,
+        touchAreaWidth, touchAreaHeight,
+        false,
+        superImage.win.imgWidth, superImage.win.imgHeight
+      );
       const idx = localY * superImage.win.imgWidth + localX;
       console.log("after assignment");
 
