@@ -45,6 +45,22 @@ export default function ImagePage({ route, navigation }) {
   const backButtonTop = Platform.select({ ios: 80, android: 50 });
 
   // ===========================================
+  // CAPTIONS & ALT TEXT
+  //
+  // Two different accessibility fields from images.json, used two different ways:
+  //   - `description` (short, always present) -> shown on screen as a visible
+  //     caption, for sighted/low-vision users who can read it.
+  //   - `altText` (longer, written by Kim/collaborators; only present for
+  //     images through ~2020 — see docs/CODE_OVERVIEW.md) -> given to
+  //     VoiceOver/TalkBack as the image's accessibilityLabel, for blind/
+  //     low-vision users navigating by screen reader.
+  // If an image has no altText yet, we fall back to description, then title,
+  // so screen readers always announce *something* rather than staying silent.
+  // ===========================================
+  const caption = image.description || "";
+  const accessibleDescription = image.altText || image.description || image.title || "Astronomical image";
+
+  // ===========================================
   // RAF LOOP — does all the work per frame
   // ===========================================
   useEffect(() => {
@@ -250,9 +266,20 @@ export default function ImagePage({ route, navigation }) {
               superImage.win.winWidth = width;
               superImage.win.winHeight = height;
             }}
+            // Screen-reader text (VoiceOver/TalkBack) — see CAPTIONS & ALT TEXT above
+            accessible={true}
+            accessibilityLabel={accessibleDescription}
+            accessibilityRole="image"
           />
         </View>
       </View>
+
+      {!!caption && (
+        <View style={styles.captionBox} pointerEvents="none">
+          <Text style={styles.captionTitle}>{image.title}</Text>
+          <Text style={styles.captionText}>{caption}</Text>
+        </View>
+      )}
 
       {cursorCoords.x !== null && cursorCoords.y !== null && (
         <>
@@ -295,4 +322,16 @@ const styles = StyleSheet.create({
   infoBox: { position: "absolute", top: 110, left: 20, backgroundColor: "#00000088", padding: 8, borderRadius: 6, zIndex: 50, minWidth: 200 },
   infoText: { color: "white", fontSize: 14, marginVertical: 2 },
   loadingText: { marginTop: 10, color: "#333" },
+  captionBox: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: "#000000AA",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    zIndex: 40,
+  },
+  captionTitle: { color: "white", fontSize: 15, fontWeight: "bold", marginBottom: 2 },
+  captionText: { color: "white", fontSize: 14 },
 });

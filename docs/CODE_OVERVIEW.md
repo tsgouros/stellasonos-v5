@@ -106,6 +106,33 @@ display size, figure out which image pixel that corresponds to.
 Used by both `pages/ImagePage.js` and `pages/TestSeg.js` — previously each
 page had its own inline copy of this math; now there's one copy both share.
 
+## Captions & alt text (`images.json`)
+
+Each entry in `images.json` can carry two different accessibility/text
+fields, used two different ways in `pages/ImagePage.js` (and
+`pages/TestSeg.js`):
+
+| Field | Source | Where it's used |
+|---|---|---|
+| `description` | Already existed — short, written for every image | Shown on screen as a visible caption bar (`styles.captionBox`), for sighted/low-vision users |
+| `altText` | New — longer descriptions written by Kim/collaborators (Google Doc, "final cleaned up alt texts") for images through ~2020. 2020–2026 images still need theirs written/scraped from chandra.si.edu/photo/ | Passed as `accessibilityLabel` on the `<Image>`, read aloud by VoiceOver/TalkBack — this is the main audience for the app |
+
+If `altText` isn't present for an image yet, the UI falls back to
+`description`, then `title`, so a screen reader always announces
+something rather than staying silent.
+
+**Coverage as of this update:** 596 of 629 images have `altText`. The
+remaining 33 are: the 16 images added in 2021 (after the doc's cutoff),
+4 non-Chandra sample/test images (`sgouros.com`, `stellasonos-files.vercel.app`
+— these aren't real astronomy photos and don't need alt text), and 13 older
+images that were apparently never written up in the doc (e.g. `2019/cme`,
+`2008/bh_spin`, `2001/orion_mov` — mostly movies, 3D-model pages, or
+"archive roundup" pages rather than single photos). Writing/scraping the
+remaining alt text (per Kim's note, from chandra.si.edu/photo/ for
+2020–2026) is manual work for a future update — once it's done, just add
+an `"altText"` key to that image's entry in `images.json` and nothing else
+needs to change.
+
 ## Known pre-existing issue
 
 `getColorAt(x, y)` reads `pos.mx` / `pos.my`, but `getPos()` returns

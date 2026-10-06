@@ -121,6 +121,9 @@ export default function TestSeg({ route, navigation }) {
       <Image
         style={styles.image}
         source={{ uri: superImage.currentImage().src }}
+        accessible={true}
+        accessibilityLabel={image.altText || image.description || image.title || "Astronomical image"}
+        accessibilityRole="image"
       />
 
       {segUri ? (
