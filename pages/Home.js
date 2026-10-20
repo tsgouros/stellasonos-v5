@@ -1,5 +1,8 @@
 import React, { useState, useRef, useMemo } from "react";
 import SideMenu from "../pages/SideMenu";
+// Full-screen search that slides in from the left (UI guide). SEARCH_BLUE is
+// shared so the inline search bar below matches its blue outline.
+import SearchScreen, { SEARCH_BLUE } from "../pages/SearchScreen";
 import {
   Platform,
   StatusBar,
@@ -35,6 +38,10 @@ const GRID_COLUMNS = 3;
 const GRID_GAP = 2;
 const GRID_TILE_SIZE = width / GRID_COLUMNS - GRID_GAP;
 
+// Side margin for the toggle row, search bar, title and caption, so the search
+// bar no longer runs edge to edge (UI guide). Change this one number to adjust.
+const SCREEN_INSET = 20;
+
 const headerLogo = require("../assets/Group_27_2x.png");
 const playIcon = require("../assets/Icon_ion-play-circle_2x.png");
 const searchIcon = require("../assets/Search_2x.png");
@@ -42,6 +49,7 @@ const menuIcon = require("../assets/Menu_2x.png");
 
 export default function Home({ navigation }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false); // sliding search screen
 
   const [searchText, setSearchText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -203,7 +211,8 @@ export default function Home({ navigation }) {
     searchContainer: {
       width: "100%",
       backgroundColor: "#000000",
-      paddingHorizontal: 1,
+      paddingHorizontal: SCREEN_INSET,
+      marginTop: 8,
       paddingBottom: 5,
       zIndex: 20,
       ...Platform.select({
@@ -217,7 +226,7 @@ export default function Home({ navigation }) {
       height: 40,
       fontSize: 18,
       borderWidth: 1,
-      borderColor: "#FFFFFF",
+      borderColor: SEARCH_BLUE, // blue outline, per the UI guide
       borderRadius: 3,
       paddingHorizontal: 10,
       color: "#FFFFFF",
@@ -263,7 +272,7 @@ export default function Home({ navigation }) {
       fontSize: 20,
       fontWeight: "600",
       textAlign: "left",
-      paddingHorizontal: 10,
+      paddingHorizontal: SCREEN_INSET,
       marginTop: 40,
     },
     captionBelowTitle: {
@@ -271,16 +280,22 @@ export default function Home({ navigation }) {
       fontSize: 14,
       fontWeight: "400",
       textAlign: "left",
-      paddingHorizontal: 10,
+      paddingHorizontal: SCREEN_INSET,
       marginTop: 4,
     },
     contentContainer: {
       flex: 1,
       alignItems: "center",
       paddingHorizontal: 10,
-      paddingTop: 40,
+      paddingTop: 16,
+      paddingBottom: 8,
     },
     imageContainer: {
+      // flex: 1 → the image takes whatever height is left after the title,
+      // buttons and thumbnail strip, so nothing gets pushed off the bottom
+      // of short screens or when the caption wraps to two lines.
+      flex: 1,
+      width: width * 0.9,
       borderRadius: 8,
       backgroundColor: "#000000",
       ...Platform.select({
@@ -297,8 +312,8 @@ export default function Home({ navigation }) {
       overflow: "hidden",
     },
     image: {
-      width: width * 0.9,
-      height: height * 0.3,
+      width: "100%",
+      height: "100%",
       resizeMode: "contain",
       borderRadius: 8,
       backgroundColor: "transparent",
@@ -316,7 +331,7 @@ export default function Home({ navigation }) {
       justifyContent: "center",
       alignItems: "center",
       width: "100%",
-      marginTop: 25,
+      marginTop: 16,
       gap: 15,
     },
     navButton: {
@@ -359,7 +374,8 @@ export default function Home({ navigation }) {
       fontStyle: "italic",
     },
     thumbnailList: {
-      marginTop: 50,
+      marginTop: 20,
+      flexGrow: 0,
       maxHeight: 90,
     },
     thumbnailItem: {
@@ -384,8 +400,9 @@ export default function Home({ navigation }) {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
-      paddingHorizontal: 10,
-      paddingVertical: 8,
+      paddingHorizontal: SCREEN_INSET,
+      paddingTop: 16, // breathing room below the NASA logo
+      paddingBottom: 8,
       backgroundColor: "#000000",
     },
     segmented: {
@@ -510,9 +527,16 @@ export default function Home({ navigation }) {
           />
 
           {/* Right Search Button */}
+          {/* The UI guide says the search screen opens when the icon is held.
+              A plain tap opens it too, so it's easy to find (and works with
+              VoiceOver's double-tap). */}
           <TouchableOpacity
-            onPress={() => console.log("Search icon pressed")}
+            onPress={() => setIsSearchOpen(true)}
+            onLongPress={() => setIsSearchOpen(true)}
             style={[dynamicStyles.headerIconWrapper, dynamicStyles.rightIcon]}
+            accessibilityRole="button"
+            accessibilityLabel="Search"
+            accessibilityHint="Opens the search screen"
           >
             <Image
               source={searchIcon}
@@ -646,6 +670,7 @@ export default function Home({ navigation }) {
                         accessibilityLabel={`${currentImage.description}. Double tap to play details.`}
                         accessible={true}
                         activeOpacity={0.85}
+                        style={{ flex: 1 }}
                       >
                         <Image
                           style={dynamicStyles.image}
@@ -747,6 +772,23 @@ export default function Home({ navigation }) {
             <StatusBar />
           </KeyboardAvoidingView>
         </TouchableWithoutFeedback>
+
+        {/* Sliding search screen. Picking a result closes it (after it slides
+            back out) and then shows that image large. */}
+        {isSearchOpen && (
+          <SearchScreen
+            images={orderedImages}
+            onSelect={(index) => {
+              setIsSearchOpen(false);
+              onSelectImage(index);
+            }}
+            onClose={() => setIsSearchOpen(false)}
+            onOpenMenu={() => {
+              setIsSearchOpen(false);
+              setIsMenuOpen(true);
+            }}
+          />
+        )}
       </SafeAreaView>
     </GestureHandlerRootView>
   );

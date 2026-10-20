@@ -1,23 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import MenuPage, { BodyText, Placeholder } from './MenuPage';
 
 export default function HowToUse() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>How to Use the App</Text>
-    </View>
+    <MenuPage title="How to Use the App">
+      <BodyText>
+        Pick an image on the home screen, then press play. Touch and drag your
+        finger across the image to hear and feel what is under it.
+      </BodyText>
+      <Placeholder>Step-by-step instructions are coming soon.</Placeholder>
+    </MenuPage>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-  },
-});

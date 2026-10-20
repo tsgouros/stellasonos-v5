@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
+  Animated,
+  BackHandler,
   View,
   Text,
   TouchableOpacity,
@@ -10,7 +12,7 @@ import {
   Platform,
   StatusBar,
 } from "react-native";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 
 const { width, height } = Dimensions.get("window");
 const searchIcon = require("../assets/Search_2x.png");
@@ -35,13 +37,8 @@ const menuItems = [
   },
   { 
     id: 4, 
-    title: "Our Team",
+    title: "Our Team & Partners",
     screenName: "Team"
-  },
-  { 
-    id: 5, 
-    title: "Our Partners",
-    screenName: "Partners"
   },
   { 
     id: 6, 
@@ -52,15 +49,64 @@ const menuItems = [
 
 export default function SideMenu({ onClose }) {
   const navigation = useNavigation();
+  const route = useRoute(); // which screen this menu is open on
 
+  // Slides in from the left (like the search screen), and slides back out
+  // before it is removed.
+  const slide = useRef(new Animated.Value(-width)).current;
+  const isClosing = useRef(false);
+
+  useEffect(() => {
+    Animated.timing(slide, { toValue: 0, duration: 250, useNativeDriver: true }).start();
+  }, []);
+
+  const closeThen = (after) => {
+    if (isClosing.current) return;
+    isClosing.current = true;
+    Animated.timing(slide, { toValue: -width, duration: 200, useNativeDriver: true }).start(() => {
+      if (after) after();
+      onClose();
+    });
+  };
+
+  // Android back button closes the menu instead of leaving Home.
+  useEffect(() => {
+    const sub = BackHandler.addEventListener("hardwareBackPress", () => {
+      closeThen();
+      return true;
+    });
+    return () => sub.remove();
+  }, []);
+
+  // Going to another page: start the page's fade-in right away and keep the
+  // (black) menu covering the old screen until it has finished. That way
+  // there is only ONE motion (the menu sliding in); the page doesn't slide
+  // in a second time after the menu slides out.
+  // Picking the page we're already on just closes the menu.
   const handlePress = (screenName) => {
+    if (screenName === route.name) {
+      closeThen();
+      return;
+    }
+    if (isClosing.current) return;
+    isClosing.current = true;
     navigation.navigate(screenName);
-    onClose();
+    setTimeout(onClose, 450);
   };
 
   return (
-    <View style={styles.menuContainer}>
-      <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+    <Animated.View style={[styles.menuContainer, { transform: [{ translateX: slide }] }]}>
+      {/* NASA logo, matching the header on the other screens */}
+      <View style={styles.logoWrap} pointerEvents="none">
+        <Image
+          source={require("../assets/Group_27_2x.png")}
+          style={styles.logo}
+          resizeMode="contain"
+          accessibilityLabel="NASA"
+        />
+      </View>
+
+      <TouchableOpacity onPress={() => closeThen()} style={styles.closeButton}>
         <Text style={styles.closeButtonText}>✕</Text>
       </TouchableOpacity>
 
@@ -88,7 +134,7 @@ export default function SideMenu({ onClose }) {
           </React.Fragment>
         ))}
       </ScrollView>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -111,6 +157,17 @@ const styles = StyleSheet.create({
     left: 10,
     zIndex: 10000,
     padding: 10,
+  },
+  logoWrap: {
+    position: "absolute",
+    top: STATUSBAR_HEIGHT + 28,
+    left: 0,
+    right: 0,
+    alignItems: "center",
+  },
+  logo: {
+    width: 120,
+    height: 40,
   },
   closeButtonText: {
     fontSize: 28,

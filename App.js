@@ -20,7 +20,6 @@ import TestSeg from './pages/TestSeg.js';
 import About from './pages/About';
 import HowToUse from './pages/HowToUse';
 import Team from './pages/Team';
-import Partners from './pages/Partners';
 import Settings from './pages/Settings';
 
 // Create a stack navigator instance
@@ -39,11 +38,12 @@ export default function App() {
         <Stack.Screen name="TestSeg" component={TestSeg} />
         
         {/* Add all your menu screens */}
-        <Stack.Screen name="About" component={About} />
-        <Stack.Screen name="HowToUse" component={HowToUse} />
-        <Stack.Screen name="Team" component={Team} />
-        <Stack.Screen name="Partners" component={Partners} />
-        <Stack.Screen name="Settings" component={Settings} />
+        {/* These fade in (instead of sliding) because the burger menu has
+            already slid in; a second slide looked like a double transition. */}
+        <Stack.Screen name="About" component={About} options={{ animation: 'fade' }} />
+        <Stack.Screen name="HowToUse" component={HowToUse} options={{ animation: 'fade' }} />
+        <Stack.Screen name="Team" component={Team} options={{ animation: 'fade' }} />
+        <Stack.Screen name="Settings" component={Settings} options={{ animation: 'fade' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

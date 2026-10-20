@@ -1,23 +1,10 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import MenuPage, { BodyText, Placeholder } from './MenuPage';
 
 export default function Settings() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Settings</Text>
-    </View>
+    <MenuPage title="Settings">
+      <Placeholder>Settings are coming soon.</Placeholder>
+    </MenuPage>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-  },
-});

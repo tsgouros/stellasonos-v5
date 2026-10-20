@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, Image, Dimensions, Platform } from 'react-native';
 import { StatusBar } from 'react-native';
 import { ContainerStyles, TextStyles } from '../utils/styles.js';
 
@@ -15,7 +15,21 @@ export default function Intro({ navigation }) {
       accessibilityHint="Double tap anywhere to start."
       activeOpacity={1}
     >
-      <View style={{ alignItems: 'center', gap: 4 }}> 
+      {/* NASA logo at the top (UI guide). Absolute, so the centered
+          welcome content below doesn't move. Decorative: the screen reader
+          reads the whole screen as "Welcome!" via the label above. */}
+      <Image
+        source={require('../assets/Group_27_2x.png')}
+        style={{
+          position: 'absolute',
+          top: Platform.OS === 'ios' ? 60 : 30,
+          width: 120,
+          height: 40,
+          resizeMode: 'contain',
+        }}
+      />
+
+      <View style={{ alignItems: 'center', gap: 4 }}>
         <Image
           source={require('../assets/Group_25_2x.png')}
           style={{
@@ -38,6 +52,18 @@ export default function Intro({ navigation }) {
 
       <Text style={[TextStyles.textSmall, { marginTop: 16 }]} accessibilityRole="text">
         Welcome! Tap anywhere to start.
+      </Text>
+
+      {/* Website at the bottom (UI guide) */}
+      <Text
+        style={{
+          position: 'absolute',
+          bottom: Platform.OS === 'ios' ? 40 : 24,
+          color: '#FFFFFF',
+          fontSize: 14,
+        }}
+      >
+        chandra.si.edu/sound/stellasonos.html
       </Text>
 
       <StatusBar style="auto" />

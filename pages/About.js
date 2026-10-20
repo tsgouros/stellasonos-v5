@@ -1,24 +1,14 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import MenuPage, { BodyText, Placeholder } from './MenuPage';
 
 export default function About() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>About the Project</Text>
-      {/* Your about content */}
-    </View>
+    <MenuPage title="About the Project">
+      <BodyText>
+        Stellasonos turns images from NASA’s Chandra X-ray Observatory into sound
+        and touch, so blind and low-vision users can explore the universe.
+      </BodyText>
+      <Placeholder>More about the project is coming soon.</Placeholder>
+    </MenuPage>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-  },
-});
