@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Platform,
   TouchableOpacity,
+  AccessibilityInfo,
+  Alert,
 } from "react-native";
 import SuperImage from "../utils/SuperImage.js";
 
@@ -45,20 +47,44 @@ export default function ImagePage({ route, navigation }) {
   const backButtonTop = Platform.select({ ios: 80, android: 50 });
 
   // ===========================================
-  // CAPTIONS & ALT TEXT
+  // ALT TEXT
   //
-  // Two different accessibility fields from images.json, used two different ways:
-  //   - `description` (short, always present) -> shown on screen as a visible
-  //     caption, for sighted/low-vision users who can read it.
-  //   - `altText` (longer, written by Kim/collaborators; only present for
-  //     images through ~2020 — see docs/CODE_OVERVIEW.md) -> given to
-  //     VoiceOver/TalkBack as the image's accessibilityLabel, for blind/
-  //     low-vision users navigating by screen reader.
-  // If an image has no altText yet, we fall back to description, then title,
-  // so screen readers always announce *something* rather than staying silent.
+  // Deliberately NOT shown on screen as a caption — with big images it would
+  // cover part of the picture. Instead it's available two ways that don't
+  // take up screen space:
+  //   - as the accessibilityLabel on the <Image> below, read aloud by
+  //     VoiceOver/TalkBack whenever a screen reader has it focused
+  //   - on demand, via the "Read Alt Text" button (handleReadAltTextPressed)
+  // `altText` (written by Kim/collaborators, only present for images through
+  // ~2020 — see docs/CODE_OVERVIEW.md) is preferred; falls back to the
+  // shorter `description`, then `title`, so there's always something to say.
   // ===========================================
-  const caption = image.description || "";
   const accessibleDescription = image.altText || image.description || image.title || "Astronomical image";
+
+  /**
+   * handleReadAltTextPressed
+   * DEBUG/TEST helper — forces the device's screen reader to speak
+   * accessibleDescription directly, bypassing touch/focus entirely.
+   * Useful on a simulator/emulator, where VoiceOver/TalkBack touch
+   * gestures don't behave like a real device (and where this screen's
+   * custom touch responder is also competing for the same touches).
+   * Remove this button once alt text has been verified on a real device,
+   * or leave it in behind a dev-only flag — your call.
+   */
+  async function handleReadAltTextPressed() {
+    const screenReaderOn = await AccessibilityInfo.isScreenReaderEnabled();
+    if (screenReaderOn) {
+      AccessibilityInfo.announceForAccessibility(accessibleDescription);
+    } else {
+      // No screen reader running (common on a fresh emulator) — show the
+      // text visually instead, so you can still confirm it's correct.
+      Alert.alert(
+        "Alt text (screen reader is off)",
+        accessibleDescription,
+        [{ text: "OK" }]
+      );
+    }
+  }
 
   // ===========================================
   // RAF LOOP — does all the work per frame
@@ -238,6 +264,21 @@ export default function ImagePage({ route, navigation }) {
         <Text style={styles.backButtonText}>← Back to Home</Text>
       </TouchableOpacity>
 
+      {/* DEBUG/TEST button — see handleReadAltTextPressed above */}
+      <TouchableOpacity
+        style={[styles.readAltTextButton, { top: backButtonTop }]}
+        onPress={handleReadAltTextPressed}
+        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+      >
+        <Text style={styles.backButtonText}>🔈 Read Alt Text</Text>
+      </TouchableOpacity>
+
+      {/* No on-screen caption here on purpose — with big images it would
+          cover part of the picture. The description/alt text is still
+          available without taking up screen space: as the screen-reader
+          accessibilityLabel on the <Image> below, and on demand via the
+          "Read Alt Text" button above. */}
+
       <View
         style={StyleSheet.absoluteFill}
         onStartShouldSetResponder={() => true}
@@ -273,13 +314,6 @@ export default function ImagePage({ route, navigation }) {
           />
         </View>
       </View>
-
-      {!!caption && (
-        <View style={styles.captionBox} pointerEvents="none">
-          <Text style={styles.captionTitle}>{image.title}</Text>
-          <Text style={styles.captionText}>{caption}</Text>
-        </View>
-      )}
 
       {cursorCoords.x !== null && cursorCoords.y !== null && (
         <>
@@ -317,21 +351,10 @@ export default function ImagePage({ route, navigation }) {
 const styles = StyleSheet.create({
   imageContainer: { flex: 1, backgroundColor: "#FFFFFF", justifyContent: "center", alignItems: "center" },
   backButton: { position: "absolute", left: 20, backgroundColor: "#333", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6, zIndex: 100 },
+  readAltTextButton: { position: "absolute", right: 20, backgroundColor: "#333", paddingVertical: 8, paddingHorizontal: 16, borderRadius: 6, zIndex: 100 },
   backButtonText: { color: "#fff", fontSize: 16 },
   circle: { height: 40, width: 40, borderRadius: 20, borderWidth: 2, borderColor: "#00000020", backgroundColor: "rgba(0,150,255,0.7)", zIndex: 50 },
   infoBox: { position: "absolute", top: 110, left: 20, backgroundColor: "#00000088", padding: 8, borderRadius: 6, zIndex: 50, minWidth: 200 },
   infoText: { color: "white", fontSize: 14, marginVertical: 2 },
   loadingText: { marginTop: 10, color: "#333" },
-  captionBox: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: "#000000AA",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    zIndex: 40,
-  },
-  captionTitle: { color: "white", fontSize: 15, fontWeight: "bold", marginBottom: 2 },
-  captionText: { color: "white", fontSize: 14 },
 });

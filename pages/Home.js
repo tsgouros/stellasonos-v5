@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useMemo } from "react";
 import SideMenu from "../pages/SideMenu";
 import {
   Platform,
@@ -25,6 +25,16 @@ import {
 const { width, height } = Dimensions.get("window");
 import images from "../images.json";
 
+// Display order lives in its own file — see utils/imageOrder.js.
+// Everything on this screen reads from `orderedImages` (below), never from
+// images.images directly, so changing how images are ordered is a one-file change.
+import { createOrder, applyOrder } from "../utils/imageOrder.js";
+
+// Grid ("Instagram") view layout
+const GRID_COLUMNS = 3;
+const GRID_GAP = 2;
+const GRID_TILE_SIZE = width / GRID_COLUMNS - GRID_GAP;
+
 const headerLogo = require("../assets/Group_27_2x.png");
 const playIcon = require("../assets/Icon_ion-play-circle_2x.png");
 const searchIcon = require("../assets/Search_2x.png");
@@ -38,17 +48,27 @@ export default function Home({ navigation }) {
   const [inputIndex, setInputIndex] = useState("1");
   const [showDropdown, setShowDropdown] = useState(false);
 
+  // "big" = one large image at a time (the original view)
+  // "grid" = small square icons you scroll through, Instagram-style
+  const [viewMode, setViewMode] = useState("big");
+  const [isReloading, setIsReloading] = useState(false);
+
+  // The order object: { displayPosition: indexInImagesJson }. See utils/imageOrder.js.
+  const [order, setOrder] = useState(() => createOrder(images.images.length));
+  const orderedImages = useMemo(() => applyOrder(images.images, order), [order]);
+
   const panRef = useRef();
   const flatListRef = useRef();
+  const gridRef = useRef();
 
   const filteredImages =
     searchText.length > 0
-      ? images.images.filter((img) =>
+      ? orderedImages.filter((img) =>
           img.title.toLowerCase().startsWith(searchText.toLowerCase())
         )
       : [];
 
-  const maxIndex = images.images.length - 1;
+  const maxIndex = orderedImages.length - 1;
 
   const scrollToThumbnail = (index) => {
     if (flatListRef.current) {
@@ -65,13 +85,33 @@ export default function Home({ navigation }) {
     setShowDropdown(text.length > 0);
   };
 
+  // Picking an image (from the search dropdown, the thumbnail strip, or by
+  // tapping a tile in the grid) shows it large. If we were in grid view this
+  // switches to big view; the thumbnail strip jumps to it when it mounts
+  // (see initialScrollIndex on the strip below).
   const onSelectImage = (index) => {
     setCurrentIndex(index);
     setInputIndex((index + 1).toString());
     setSearchText("");
     setShowDropdown(false);
+    setViewMode("big");
     Keyboard.dismiss();
     scrollToThumbnail(index);
+  };
+
+  // Reload: re-scramble the order and go back to the top. Triggered by the
+  // Reload button and by pulling down on the grid.
+  const handleReload = () => {
+    setIsReloading(true);
+    setOrder(createOrder(images.images.length));
+    setCurrentIndex(0);
+    setInputIndex("1");
+    setSearchText("");
+    setShowDropdown(false);
+    if (gridRef.current) gridRef.current.scrollToOffset({ offset: 0, animated: false });
+    if (flatListRef.current) flatListRef.current.scrollToOffset({ offset: 0, animated: false });
+    // brief spinner so the pull-to-refresh feels responsive
+    setTimeout(() => setIsReloading(false), 400);
   };
 
   const handleInputChange = (text) => setInputIndex(text);
@@ -226,6 +266,14 @@ export default function Home({ navigation }) {
       paddingHorizontal: 10,
       marginTop: 40,
     },
+    captionBelowTitle: {
+      color: "#CCCCCC",
+      fontSize: 14,
+      fontWeight: "400",
+      textAlign: "left",
+      paddingHorizontal: 10,
+      marginTop: 4,
+    },
     contentContainer: {
       flex: 1,
       alignItems: "center",
@@ -331,9 +379,86 @@ export default function Home({ navigation }) {
       borderColor: "black",
       borderRadius: 3,
     },
+    // --- Big / Grid toggle row + Reload button ---
+    toggleRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 10,
+      paddingVertical: 8,
+      backgroundColor: "#000000",
+    },
+    segmented: {
+      flexDirection: "row",
+      borderWidth: 1,
+      borderColor: "#FFFFFF",
+      borderRadius: 3,
+      overflow: "hidden",
+    },
+    segButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 22,
+      backgroundColor: "#000000",
+    },
+    segButtonSelected: {
+      backgroundColor: "#FFFFFF",
+    },
+    segText: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    segTextSelected: {
+      color: "#000000",
+    },
+    reloadButton: {
+      paddingVertical: 8,
+      paddingHorizontal: 14,
+      borderWidth: 1,
+      borderColor: "#FFFFFF",
+      borderRadius: 3,
+      backgroundColor: "#000000",
+    },
+    reloadText: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    // --- Grid view ---
+    gridList: {
+      flex: 1,
+    },
+    gridTile: {
+      width: GRID_TILE_SIZE,
+      height: GRID_TILE_SIZE,
+      margin: GRID_GAP / 2,
+      backgroundColor: "#111111",
+    },
+    gridImage: {
+      width: "100%",
+      height: "100%",
+    },
   };
 
-  const currentImage = images.images[currentIndex];
+  const currentImage = orderedImages[currentIndex];
+
+  // One square tile in the grid view. Tapping it shows that image large.
+  const renderGridTile = ({ item, index }) => (
+    <TouchableOpacity
+      onPress={() => onSelectImage(index)}
+      activeOpacity={0.8}
+      accessibilityRole="button"
+      accessibilityLabel={item.title}
+      accessibilityHint="Shows this image large"
+      style={dynamicStyles.gridTile}
+    >
+      <Image
+        source={{ uri: item.src }}
+        style={dynamicStyles.gridImage}
+        resizeMode="cover"
+      />
+    </TouchableOpacity>
+  );
 
   const renderThumbnail = ({ item, index }) => (
     <TouchableOpacity
@@ -403,6 +528,50 @@ export default function Home({ navigation }) {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
           >
+            {/* Big / Grid toggle (left) + Reload (right) */}
+            <View style={dynamicStyles.toggleRow}>
+              <View style={dynamicStyles.segmented}>
+                {[
+                  ["big", "Big"],
+                  ["grid", "Grid"],
+                ].map(([mode, label]) => {
+                  const selected = viewMode === mode;
+                  return (
+                    <TouchableOpacity
+                      key={mode}
+                      onPress={() => setViewMode(mode)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${label} view`}
+                      accessibilityState={{ selected }}
+                      style={[
+                        dynamicStyles.segButton,
+                        selected && dynamicStyles.segButtonSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          dynamicStyles.segText,
+                          selected && dynamicStyles.segTextSelected,
+                        ]}
+                      >
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              <TouchableOpacity
+                onPress={handleReload}
+                accessibilityRole="button"
+                accessibilityLabel="Reload"
+                accessibilityHint="Shuffles the images into a new order"
+                style={dynamicStyles.reloadButton}
+              >
+                <Text style={dynamicStyles.reloadText}>↻ Reload</Text>
+              </TouchableOpacity>
+            </View>
+
             <View style={dynamicStyles.searchContainer}>
               <TextInput
                 placeholder="Search images by title..."
@@ -424,10 +593,10 @@ export default function Home({ navigation }) {
                   showsVerticalScrollIndicator={true}
                 >
                   {filteredImages.map((img) => {
-                    const idx = images.images.indexOf(img);
+                    const idx = orderedImages.indexOf(img);
                     return (
                       <TouchableOpacity
-                        key={img.id || idx}
+                        key={`${img.id}-${idx}`}
                         onPress={() => onSelectImage(idx)}
                         style={dynamicStyles.dropdownItem}
                         accessibilityLabel={`Select image titled ${img.title}`}
@@ -445,12 +614,23 @@ export default function Home({ navigation }) {
               )}
             </View>
 
-            {currentImage && (
-              <Text style={dynamicStyles.titleBelowSearch}>
-                {currentImage.title}
-              </Text>
+            {/* ---- BIG VIEW: title, caption, large image, nav buttons, thumbnail strip ---- */}
+            {viewMode === "big" && currentImage && (
+              <>
+                <Text style={dynamicStyles.titleBelowSearch}>
+                  {currentImage.title}
+                </Text>
+                {/* Short caption, from images.json's `description` field —
+                    see docs/CODE_OVERVIEW.md for how this differs from altText */}
+                {!!currentImage.description && (
+                  <Text style={dynamicStyles.captionBelowTitle}>
+                    {currentImage.description}
+                  </Text>
+                )}
+              </>
             )}
 
+            {viewMode === "big" && (
             <View style={dynamicStyles.contentContainer}>
               {currentImage ? (
                 <>
@@ -524,9 +704,11 @@ export default function Home({ navigation }) {
 
               <FlatList
                 ref={flatListRef}
-                data={images.images}
+                data={orderedImages}
+                // When coming back from grid view, open the strip at the selected image
+                initialScrollIndex={currentIndex}
                 horizontal={true}
-                keyExtractor={(item, index) => item.id || index.toString()}
+                keyExtractor={(item, index) => `${item.id}-${index}`}
                 renderItem={renderThumbnail}
                 style={dynamicStyles.thumbnailList}
                 showsHorizontalScrollIndicator={false}
@@ -539,6 +721,28 @@ export default function Home({ navigation }) {
                 })}
               />
             </View>
+            )}
+
+            {/* ---- GRID VIEW: small square icons, scroll like Instagram.
+                Tap a tile → big view of that image. Pull down → reload. ---- */}
+            {viewMode === "grid" && (
+              <FlatList
+                ref={gridRef}
+                data={orderedImages}
+                renderItem={renderGridTile}
+                // id + position: images.json has 3 entries (Geminga, CL J1001,
+                // Zwicky 8338) listed twice with the same id, which would collide
+                keyExtractor={(item, index) => `${item.id}-${index}`}
+                numColumns={GRID_COLUMNS}
+                style={dynamicStyles.gridList}
+                refreshing={isReloading}
+                onRefresh={handleReload}
+                initialNumToRender={18}
+                windowSize={7}
+                keyboardShouldPersistTaps="handled"
+                accessibilityLabel="Image grid"
+              />
+            )}
 
             <StatusBar />
           </KeyboardAvoidingView>
