@@ -54,7 +54,7 @@ const searchIcon = require("../assets/Search_2x.png");
 const menuIcon = require("../assets/Menu_2x.png");
 
 // Colors sampled from the UI guide PDF.
-// SEARCH_BLUE is also used by Home.js for the inline search bar.
+// SEARCH_BLUE is exported in case other screens need the same blue.
 export const SEARCH_BLUE = "#47B7E2";
 const ARROW_RED = "#E24A3B";
 const PANEL_GRAY = "#DDE0E0";
@@ -163,7 +163,7 @@ export default function SearchScreen({ images, onSelect, onClose, onOpenMenu }) 
     else setQuery(title);
   };
 
-  // Same matching rule as Home's inline search bar: title starts with what was typed.
+  // Match rule: the title starts with what was typed.
   const typed = query.trim().toLowerCase();
   const results = typed
     ? images

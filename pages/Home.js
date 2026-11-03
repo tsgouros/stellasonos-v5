@@ -1,8 +1,8 @@
 import React, { useState, useRef, useMemo } from "react";
 import SideMenu from "../pages/SideMenu";
-// Full-screen search that slides in from the left (UI guide). SEARCH_BLUE is
-// shared so the inline search bar below matches its blue outline.
-import SearchScreen, { SEARCH_BLUE } from "../pages/SearchScreen";
+// Full-screen search that slides in from the left (UI guide). It is the only
+// way to search: opened from the search icon in the header.
+import SearchScreen from "../pages/SearchScreen";
 import {
   Platform,
   StatusBar,
@@ -11,9 +11,7 @@ import {
   View,
   Dimensions,
   TouchableOpacity,
-  TextInput,
   Keyboard,
-  ScrollView,
   SafeAreaView,
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
@@ -27,6 +25,11 @@ import {
 
 const { width, height } = Dimensions.get("window");
 import images from "../images.json";
+
+// Images flagged "excluded": true in images.json (insets, side-by-side panels,
+// graphs — not a single picture, so not good for sonification) are skipped.
+// See tools/flag_multipanel.mjs. Everything below uses `visibleImages`.
+const visibleImages = images.images.filter((img) => !img.excluded);
 
 // Display order lives in its own file — see utils/imageOrder.js.
 // Everything on this screen reads from `orderedImages` (below), never from
@@ -51,10 +54,8 @@ export default function Home({ navigation }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false); // sliding search screen
 
-  const [searchText, setSearchText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [inputIndex, setInputIndex] = useState("1");
-  const [showDropdown, setShowDropdown] = useState(false);
 
   // "big" = one large image at a time (the original view)
   // "grid" = small square icons you scroll through, Instagram-style
@@ -62,19 +63,12 @@ export default function Home({ navigation }) {
   const [isReloading, setIsReloading] = useState(false);
 
   // The order object: { displayPosition: indexInImagesJson }. See utils/imageOrder.js.
-  const [order, setOrder] = useState(() => createOrder(images.images.length));
-  const orderedImages = useMemo(() => applyOrder(images.images, order), [order]);
+  const [order, setOrder] = useState(() => createOrder(visibleImages.length));
+  const orderedImages = useMemo(() => applyOrder(visibleImages, order), [order]);
 
   const panRef = useRef();
   const flatListRef = useRef();
   const gridRef = useRef();
-
-  const filteredImages =
-    searchText.length > 0
-      ? orderedImages.filter((img) =>
-          img.title.toLowerCase().startsWith(searchText.toLowerCase())
-        )
-      : [];
 
   const maxIndex = orderedImages.length - 1;
 
@@ -88,20 +82,13 @@ export default function Home({ navigation }) {
     }
   };
 
-  const onSearchChange = (text) => {
-    setSearchText(text);
-    setShowDropdown(text.length > 0);
-  };
-
-  // Picking an image (from the search dropdown, the thumbnail strip, or by
+  // Picking an image (from the search screen, the thumbnail strip, or by
   // tapping a tile in the grid) shows it large. If we were in grid view this
   // switches to big view; the thumbnail strip jumps to it when it mounts
   // (see initialScrollIndex on the strip below).
   const onSelectImage = (index) => {
     setCurrentIndex(index);
     setInputIndex((index + 1).toString());
-    setSearchText("");
-    setShowDropdown(false);
     setViewMode("big");
     Keyboard.dismiss();
     scrollToThumbnail(index);
@@ -111,11 +98,9 @@ export default function Home({ navigation }) {
   // Reload button and by pulling down on the grid.
   const handleReload = () => {
     setIsReloading(true);
-    setOrder(createOrder(images.images.length));
+    setOrder(createOrder(visibleImages.length));
     setCurrentIndex(0);
     setInputIndex("1");
-    setSearchText("");
-    setShowDropdown(false);
     if (gridRef.current) gridRef.current.scrollToOffset({ offset: 0, animated: false });
     if (flatListRef.current) flatListRef.current.scrollToOffset({ offset: 0, animated: false });
     // brief spinner so the pull-to-refresh feels responsive
@@ -207,65 +192,6 @@ export default function Home({ navigation }) {
     headerImage: {
       height: 40,
       width: 120,
-    },
-    searchContainer: {
-      width: "100%",
-      backgroundColor: "#000000",
-      paddingHorizontal: SCREEN_INSET,
-      marginTop: 8,
-      paddingBottom: 5,
-      zIndex: 20,
-      ...Platform.select({
-        android: {
-          marginTop: 20,
-        },
-      }),
-    },
-    searchInput: {
-      width: "100%",
-      height: 40,
-      fontSize: 18,
-      borderWidth: 1,
-      borderColor: SEARCH_BLUE, // blue outline, per the UI guide
-      borderRadius: 3,
-      paddingHorizontal: 10,
-      color: "#FFFFFF",
-      backgroundColor: "#000000",
-    },
-    dropdown: {
-      maxHeight: 150,
-      borderWidth: 1,
-      borderColor: "#ccc",
-      borderRadius: 6,
-      backgroundColor: "#000000",
-      marginTop: 5,
-      zIndex: 20,
-      ...Platform.select({
-        ios: {
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 4,
-        },
-        android: {
-          elevation: 4,
-        },
-      }),
-    },
-    dropdownItem: {
-      paddingVertical: 10,
-      paddingHorizontal: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: "#eee",
-    },
-    dropdownItemText: {
-      fontSize: 16,
-      color: "#FFFFFF",
-    },
-    noResultsText: {
-      padding: 10,
-      fontStyle: "italic",
-      color: "#999",
     },
     titleBelowSearch: {
       color: "#FFFFFF",
@@ -594,48 +520,6 @@ export default function Home({ navigation }) {
               >
                 <Text style={dynamicStyles.reloadText}>↻ Reload</Text>
               </TouchableOpacity>
-            </View>
-
-            <View style={dynamicStyles.searchContainer}>
-              <TextInput
-                placeholder="Search images by title..."
-                placeholderTextColor="#777575ff"
-                style={dynamicStyles.searchInput}
-                value={searchText}
-                onChangeText={onSearchChange}
-                accessibilityLabel="Search images by title"
-                autoCorrect={false}
-                autoCapitalize="none"
-                clearButtonMode="while-editing"
-              />
-              {showDropdown && filteredImages.length > 0 && (
-                <ScrollView
-                  style={dynamicStyles.dropdown}
-                  keyboardShouldPersistTaps="handled"
-                  nestedScrollEnabled={true}
-                  contentContainerStyle={{ paddingVertical: 5 }}
-                  showsVerticalScrollIndicator={true}
-                >
-                  {filteredImages.map((img) => {
-                    const idx = orderedImages.indexOf(img);
-                    return (
-                      <TouchableOpacity
-                        key={`${img.id}-${idx}`}
-                        onPress={() => onSelectImage(idx)}
-                        style={dynamicStyles.dropdownItem}
-                        accessibilityLabel={`Select image titled ${img.title}`}
-                      >
-                        <Text style={dynamicStyles.dropdownItemText}>
-                          {img.title}
-                        </Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </ScrollView>
-              )}
-              {showDropdown && filteredImages.length === 0 && (
-                <Text style={dynamicStyles.noResultsText}>No images found</Text>
-              )}
             </View>
 
             {/* ---- BIG VIEW: title, caption, large image, nav buttons, thumbnail strip ---- */}
