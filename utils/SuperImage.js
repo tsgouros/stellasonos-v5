@@ -28,7 +28,8 @@ export default class SuperImage {
     this.id = complexImage.id;
 
     // Grab the config for this specific image up front so we don't have to look it up every time
-    this.imageConfig = ironicConfig.colors[this.title] || {};
+    this.imageConfig = ironicConfig.colors[this.title]
+  || { ...(ironicConfig.colors.default || {}) };
     this.layers = { 0: { src: complexImage.src } };
     this.currentImageKey = 0;
 

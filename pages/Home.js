@@ -482,7 +482,7 @@ export default function Home({ navigation }) {
             <View style={dynamicStyles.toggleRow}>
               <View style={dynamicStyles.segmented}>
                 {[
-                  ["big", "Big"],
+                  ["big", "Full"],
                   ["grid", "Grid"],
                 ].map(([mode, label]) => {
                   const selected = viewMode === mode;
