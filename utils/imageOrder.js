@@ -62,6 +62,40 @@ export function createScrambledOrder(count, rng = Math.random) {
 }
 
 // All available ordering methods, by name. Add new ones here (see header).
+/**
+ * yearOf
+ * The year an image was released, read from its Chandra page address
+ * ("https://chandra.harvard.edu/photo/2017/geminga" -> 2017).
+ * Returns null for images with no year (the sample/test images).
+ */
+export function yearOf(item) {
+  const match = ((item && item.url) || "").match(/\/photo\/(\d{4})\//);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+/**
+ * createDateOrder
+ * Orders images by release year. Images from the same year keep their
+ * images.json order (we only have the year, not the month, for now), and
+ * images with no year go last in either direction.
+ */
+export function createDateOrder(items, newestFirst = true) {
+  const indexes = items.map((_, i) => i);
+  indexes.sort((a, b) => {
+    const ya = yearOf(items[a]);
+    const yb = yearOf(items[b]);
+    if (ya === null && yb === null) return a - b;
+    if (ya === null) return 1;
+    if (yb === null) return -1;
+    if (ya !== yb) return newestFirst ? yb - ya : ya - yb;
+    return a - b;
+  });
+  const order = {};
+  indexes.forEach((realIndex, position) => {
+    order[position] = realIndex;
+  });
+  return order;
+}
 const ORDER_METHODS = {
   original: (count) => createIdentityOrder(count),
   scramble: (count, rng) => createScrambledOrder(count, rng),

@@ -16,6 +16,7 @@ import {
   KeyboardAvoidingView,
   TouchableWithoutFeedback,
   FlatList,
+  Modal,
 } from "react-native";
 
 import {
@@ -34,8 +35,7 @@ const visibleImages = images.images.filter((img) => !img.excluded);
 // Display order lives in its own file — see utils/imageOrder.js.
 // Everything on this screen reads from `orderedImages` (below), never from
 // images.images directly, so changing how images are ordered is a one-file change.
-import { createOrder, applyOrder } from "../utils/imageOrder.js";
-
+import { createOrder, applyOrder, createDateOrder } from "../utils/imageOrder.js";
 // Grid ("Instagram") view layout
 const GRID_COLUMNS = 3;
 const GRID_GAP = 2;
@@ -44,6 +44,16 @@ const GRID_TILE_SIZE = width / GRID_COLUMNS - GRID_GAP;
 // Side margin for the toggle row, search bar, title and caption, so the search
 // bar no longer runs edge to edge (UI guide). Change this one number to adjust.
 const SCREEN_INSET = 20;
+
+
+// The sort dropdown (top right of Home): label per mode on the button, and
+// the three choices in the menu.
+const SORT_BUTTON_LABEL = { newest: "Newest ↓", oldest: "Oldest ↑", scramble: "Scrambled" };
+const SORT_OPTIONS = [
+  ["newest", "Newest first"],
+  ["oldest", "Oldest first"],
+  ["scramble", "Scramble"],
+];
 
 const headerLogo = require("../assets/Group_27_2x.png");
 const playIcon = require("../assets/Icon_ion-play-circle_2x.png");
@@ -63,7 +73,16 @@ export default function Home({ navigation }) {
   const [isReloading, setIsReloading] = useState(false);
 
   // The order object: { displayPosition: indexInImagesJson }. See utils/imageOrder.js.
-  const [order, setOrder] = useState(() => createOrder(visibleImages.length));
+  // sortMode: "newest" (default) | "oldest" | "scramble"
+  const buildOrder = (mode) =>
+    mode === "scramble"
+      ? createOrder(visibleImages.length, "scramble")
+      : createDateOrder(visibleImages, mode === "newest");
+  const [sortMode, setSortMode] = useState("newest");
+  const [isSortOpen, setIsSortOpen] = useState(false);
+  const [sortMenuPos, setSortMenuPos] = useState({ top: 0, right: SCREEN_INSET });
+  const sortButtonRef = useRef(null);
+  const [order, setOrder] = useState(() => buildOrder("newest"));
   const orderedImages = useMemo(() => applyOrder(visibleImages, order), [order]);
 
   const panRef = useRef();
@@ -96,15 +115,34 @@ export default function Home({ navigation }) {
 
   // Reload: re-scramble the order and go back to the top. Triggered by the
   // Reload button and by pulling down on the grid.
-  const handleReload = () => {
+  const applySort = (mode) => {
     setIsReloading(true);
-    setOrder(createOrder(visibleImages.length));
+    setSortMode(mode);
+    setOrder(buildOrder(mode));
     setCurrentIndex(0);
     setInputIndex("1");
     if (gridRef.current) gridRef.current.scrollToOffset({ offset: 0, animated: false });
     if (flatListRef.current) flatListRef.current.scrollToOffset({ offset: 0, animated: false });
     // brief spinner so the pull-to-refresh feels responsive
     setTimeout(() => setIsReloading(false), 400);
+  };
+  // Pull-down on the grid: redo the current sort (a scramble reshuffles).
+  const handleReload = () => applySort(sortMode);
+
+  // Open the dropdown just under the button.
+  const openSortMenu = () => {
+    if (sortButtonRef.current) {
+      sortButtonRef.current.measureInWindow((x, y, w, h) => {
+        setSortMenuPos({ top: y + h + 4, right: width - (x + w) });
+        setIsSortOpen(true);
+      });
+    } else {
+      setIsSortOpen(true);
+    }
+  };
+  const chooseSort = (mode) => {
+    setIsSortOpen(false);
+    applySort(mode);
   };
 
   const handleInputChange = (text) => setInputIndex(text);
@@ -331,6 +369,34 @@ export default function Home({ navigation }) {
       paddingBottom: 8,
       backgroundColor: "#000000",
     },
+    // --- Sort dropdown ---
+    sortBackdrop: {
+      flex: 1,
+    },
+    sortMenu: {
+      position: "absolute",
+      minWidth: 180,
+      backgroundColor: "#000000",
+      borderWidth: 1,
+      borderColor: "#FFFFFF",
+      borderRadius: 3,
+      overflow: "hidden",
+    },
+    sortMenuItem: {
+      paddingVertical: 12,
+      paddingHorizontal: 16,
+    },
+    sortMenuItemSelected: {
+      backgroundColor: "#FFFFFF",
+    },
+    sortMenuText: {
+      color: "#FFFFFF",
+      fontSize: 16,
+      fontWeight: "600",
+    },
+    sortMenuTextSelected: {
+      color: "#000000",
+    },
     segmented: {
       flexDirection: "row",
       borderWidth: 1,
@@ -478,7 +544,7 @@ export default function Home({ navigation }) {
             behavior={Platform.OS === "ios" ? "padding" : undefined}
             keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
           >
-            {/* Big / Grid toggle (left) + Reload (right) */}
+            {/* Full / Grid toggle (left) + Sort dropdown (right) */}
             <View style={dynamicStyles.toggleRow}>
               <View style={dynamicStyles.segmented}>
                 {[
@@ -511,16 +577,64 @@ export default function Home({ navigation }) {
                 })}
               </View>
 
-              <TouchableOpacity
-                onPress={handleReload}
-                accessibilityRole="button"
-                accessibilityLabel="Reload"
-                accessibilityHint="Shuffles the images into a new order"
-                style={dynamicStyles.reloadButton}
-              >
-                <Text style={dynamicStyles.reloadText}>↻ Reload</Text>
-              </TouchableOpacity>
+              <View ref={sortButtonRef} collapsable={false}>
+                <TouchableOpacity
+                  onPress={openSortMenu}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Sort: ${SORT_BUTTON_LABEL[sortMode]}`}
+                  accessibilityHint="Opens a menu: newest first, oldest first, or scramble"
+                  style={dynamicStyles.reloadButton}
+                >
+                  <Text style={dynamicStyles.reloadText}>{SORT_BUTTON_LABEL[sortMode]} ▾</Text>
+                </TouchableOpacity>
+              </View>
             </View>
+
+            {/* Sort dropdown: tap outside to close */}
+            <Modal
+              transparent
+              animationType="fade"
+              visible={isSortOpen}
+              statusBarTranslucent
+              onRequestClose={() => setIsSortOpen(false)}
+            >
+              <TouchableWithoutFeedback onPress={() => setIsSortOpen(false)}>
+                <View style={dynamicStyles.sortBackdrop}>
+                  <View
+                    style={[
+                      dynamicStyles.sortMenu,
+                      { top: sortMenuPos.top, right: sortMenuPos.right },
+                    ]}
+                  >
+                    {SORT_OPTIONS.map(([mode, label]) => {
+                      const selected = sortMode === mode;
+                      return (
+                        <TouchableOpacity
+                          key={mode}
+                          onPress={() => chooseSort(mode)}
+                          accessibilityRole="button"
+                          accessibilityLabel={label}
+                          accessibilityState={{ selected }}
+                          style={[
+                            dynamicStyles.sortMenuItem,
+                            selected && dynamicStyles.sortMenuItemSelected,
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              dynamicStyles.sortMenuText,
+                              selected && dynamicStyles.sortMenuTextSelected,
+                            ]}
+                          >
+                            {label}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+            </Modal>
 
             {/* ---- BIG VIEW: title, caption, large image, nav buttons, thumbnail strip ---- */}
             {viewMode === "big" && currentImage && (

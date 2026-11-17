@@ -30,7 +30,7 @@ const menuItems = [
   },
   { 
     id: 3, 
-    title: "Explore the Galaxy",
+    title: "Explore the Universe",    
     icon: searchIcon,
     special: true,
     screenName: "Home"

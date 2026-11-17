@@ -19,7 +19,6 @@ import TestSeg from './pages/TestSeg.js';
 
 import About from './pages/About';
 import HowToUse from './pages/HowToUse';
-import Team from './pages/Team';
 import Settings from './pages/Settings';
 
 // Create a stack navigator instance
@@ -42,7 +41,6 @@ export default function App() {
             already slid in; a second slide looked like a double transition. */}
         <Stack.Screen name="About" component={About} options={{ animation: 'fade' }} />
         <Stack.Screen name="HowToUse" component={HowToUse} options={{ animation: 'fade' }} />
-        <Stack.Screen name="Team" component={Team} options={{ animation: 'fade' }} />
         <Stack.Screen name="Settings" component={Settings} options={{ animation: 'fade' }} />
       </Stack.Navigator>
     </NavigationContainer>
