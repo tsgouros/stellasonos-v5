@@ -19,7 +19,6 @@ export default function About() {
         Stellasonos turns images from NASA’s Chandra X-ray Observatory into sound
         and touch, so blind and low-vision users can explore the universe.
       </BodyText>
-      <Placeholder>More about the project is coming soon.</Placeholder>
 
       <Heading>Our Team & Partners</Heading>
       <BodyText>A NASA/CXO/SAO application</BodyText>

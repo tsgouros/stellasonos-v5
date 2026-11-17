@@ -13,6 +13,7 @@
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { Player } from '@react-native-community/audio-toolkit';
 import { Vibration } from 'react-native';
+import { getSettings } from './settings';
 
 export default class AudioController {
   /**
@@ -198,7 +199,7 @@ export default class AudioController {
 
       if (this.activePlayer) {
         // Only play if the player has finished preparing — otherwise the audio toolkit will throw
-        if (this.activePlayer.isPrepared) {
+        if (this.activePlayer.isPrepared && getSettings().soundOn) {          
           this.activePlayer.play((err) => {
             if (err) {
               console.error(`Error playing sound for segment ${segmentKey}:`, err);
@@ -311,6 +312,7 @@ export default class AudioController {
    */
   triggerHaptic(hapticConfig) {
     if (!hapticConfig) return;
+    if (!getSettings().hapticsOn) return;
     try {
       if (hapticConfig.type === "haptic") {
         ReactNativeHapticFeedback.trigger(hapticConfig.spec, { enableVibrateFallback: true });

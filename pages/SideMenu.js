@@ -36,11 +36,6 @@ const menuItems = [
     screenName: "Home"
   },
   { 
-    id: 4, 
-    title: "Our Team & Partners",
-    screenName: "Team"
-  },
-  { 
     id: 6, 
     title: "Settings",
     screenName: "Settings"

@@ -20,6 +20,10 @@ import SuperImage from "../utils/SuperImage.js";
 
 import { displayToImageCoords, getFitSize } from "../utils/imageLayout.js";
 
+// Set to true to show the testing overlay (screen coords, segment, sound info).
+// Keep false for the final app.
+const SHOW_DEBUG_INFO = false;
+
 const AUDIO_THROTTLE_MS = 100;
 
 export default function ImagePage({ route, navigation }) {
@@ -45,6 +49,12 @@ export default function ImagePage({ route, navigation }) {
   const screenWidth = Dimensions.get("window").width;
   const screenHeight = Dimensions.get("window").height;
   const backButtonTop = Platform.select({ ios: 80, android: 50 });
+
+  // Space kept clear for the Back / Read Alt Text buttons, so the image
+  // always starts below them and still fits on screen.
+  const topReserved = backButtonTop + 48;
+  const bottomReserved = 20;
+  const availableHeight = screenHeight - topReserved - bottomReserved;
 
   // ===========================================
   // ALT TEXT
@@ -102,7 +112,7 @@ export default function ImagePage({ route, navigation }) {
         setCursorCoords({ x: absoluteX, y: absoluteY });
 
         const imageLeft = (screenWidth - imageSize.width) / 2;
-        const imageTop = (screenHeight - imageSize.height) / 2;
+        const imageTop = topReserved + (availableHeight - imageSize.height) / 2;
         const displayX = absoluteX - imageLeft;
         const displayY = absoluteY - imageTop;
 
@@ -193,8 +203,8 @@ export default function ImagePage({ route, navigation }) {
             const aspectRatio = width / height;
             const rotate = aspectRatio > 1.3;
             const finalSize = rotate
-              ? getFitSize(height, width, screenWidth * 0.95, screenHeight * 0.95)
-              : getFitSize(width, height, screenWidth * 0.95, screenHeight * 0.95);
+              ? getFitSize(height, width, screenWidth * 0.95, availableHeight)
+              : getFitSize(width, height, screenWidth * 0.95, availableHeight);
 
             setShouldRotate(rotate);
             setImageSize(finalSize);
@@ -293,7 +303,7 @@ export default function ImagePage({ route, navigation }) {
         }}
         onResponderRelease={handleTouch}
       >
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: topReserved, paddingBottom: bottomReserved }}>
           <Image
             style={{
               width: shouldRotate ? imageSize.height : imageSize.width,
@@ -324,6 +334,7 @@ export default function ImagePage({ route, navigation }) {
             ]}
             pointerEvents="none"
           />
+          {SHOW_DEBUG_INFO && (
           <View style={styles.infoBox}>
             <Text style={styles.infoText}>
               Screen: {cursorCoords.x.toFixed(0)}, {cursorCoords.y.toFixed(0)}
@@ -342,6 +353,7 @@ export default function ImagePage({ route, navigation }) {
               </>
             )}
           </View>
+          )}
         </>
       )}
     </View>
