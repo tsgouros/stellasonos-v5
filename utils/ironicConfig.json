@@ -15,7 +15,6 @@
         "10": { "sound": "https://sgouros.com/stellasonos/samples/saxophone/F4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
         "11": { "sound": "https://sgouros.com/stellasonos/samples/violin/C4.mp3", "volume": 2.0, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true }
       },
-
       "Geminga": {
         "-1": { "sound": "https://sgouros.com/stellasonos/samples/piano/E3.mp3", "volume": 2.0, "haptic": { "type": "haptic", "spec": "impactHeavy" }, "switchPlayer": false },
         "0": { "sound": "https://stellasonos-files.vercel.app/samples/bassoon/G1.mp3", "volume": 0.9, "haptic": { "type": "vibration", "spec": [200, 5, 200] }, "switchPlayer": true },
